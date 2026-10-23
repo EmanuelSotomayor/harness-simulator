@@ -3263,8 +3263,10 @@ function summaryJson(){
             payloads:(s.payloadFn?s.payloadFn():(s.payloads||[])).map(p=>typeof p==='string'?{h:'',c:p}:{h:p.h||'',c:p.c||''})
           }))};
 }
-function showSummary(){
-  const box=$('summary'); if(!box || !steps.length) return;
+function showSummary(opts){
+  opts = opts || {};
+  const box=$('summary'); if(!box) return;
+  if(!steps.length){ toast('Primero iniciá una simulación para ver el resumen'); return; }
   const rows=summaryRows(), t=summaryTotals(rows);
   const model=(PRICES[cfg.price]||{}).name||cfg.price;
   const table=rows.map(r=>`<tr><td>${r.k}</td><td>${Math.round(r.input).toLocaleString('es')}</td><td>${Math.round(r.cached).toLocaleString('es')}</td><td>${Math.round(r.write).toLocaleString('es')}</td><td>${r.output}</td><td>${money(r.cost)}</td><td>${(r.ttfb*1000).toFixed(0)} ms</td><td>${r.total.toFixed(2)} s</td></tr>`).join('');
@@ -3295,6 +3297,7 @@ function showSummary(){
     copyText('curl -s '+url+" -H 'Content-Type: application/json' -d '"+payload+"'");
   });
   scheduleDecorate();
+  if(opts.scroll) requestAnimationFrame(()=>{ if(box.scrollIntoView) box.scrollIntoView({behavior:'smooth', block:'start'}); });
 }
 function copyText(t){
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -4832,7 +4835,7 @@ $('btnAuto').onclick  = ()=>{
 };
 $('btnPrev').onclick = ()=> prevStep();
 $('btnNext2').onclick = ()=> next();
-$('btnSummary').onclick = ()=> showSummary();
+$('btnSummary').onclick = ()=> showSummary({scroll:true});
 $('stepSelect').onchange = ()=> gotoStep(+$('stepSelect').value);
 if($('btnLabs')) $('btnLabs').onclick = ()=> openLabs();
 if($('btnSandbox')) $('btnSandbox').onclick = ()=> openSandbox();

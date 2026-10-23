@@ -126,7 +126,7 @@
   .glossary summary{cursor:pointer; color:var(--accent); font-size:12px;}
   .glossary dt{font-weight:600; margin-top:8px; color:var(--text);}
   .glossary dd{color:var(--muted); line-height:1.45; margin:2px 0 0;}
-  .summary{margin-top:12px;}
+  .summary{margin-top:12px; scroll-margin-top:78px;}
   .summary table{width:100%; border-collapse:collapse; font-size:11.5px; font-family:ui-monospace,monospace;}
   .summary th,.summary td{border-bottom:1px solid var(--border); padding:5px 6px; text-align:right; white-space:nowrap;}
   .summary th:first-child,.summary td:first-child{text-align:left;}
