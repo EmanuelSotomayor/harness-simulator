@@ -10,7 +10,7 @@ python3 -m http.server 8080   # http://localhost:8080/
 
 Para deployar, subí el contenido del repo a GitHub Pages, Netlify o Cloudflare Pages. El entrypoint es `index.html`; no hay paso de build.
 
-Este simulador se inspira en el currículum de [BYO Harness](https://www.byoharness.dev/es/#curriculum) (MIT). El mapa de qué se tomó y qué falta está en [`docs/byo-harness-map.md`](docs/byo-harness-map.md).
+Este simulador se inspira en varias fuentes: el currículum de [BYO Harness](https://www.byoharness.dev/es/#curriculum) (MIT), documentación de proveedores, papers sobre contexto y agentes, y repositorios como OpenCode, Claude Code y Aider. BYO Harness es una de las referencias, no la única. El mapa de qué se tomó de ese curso está en [`docs/byo-harness-map.md`](docs/byo-harness-map.md); las referencias completas están al final.
 
 ## Qué muestra
 
@@ -86,9 +86,9 @@ La secuencia didáctica es: **declarás → validás → ejecutás**. Un JSON pe
 
 La idea central: **el schema describe, Pydantic valida, el harness decide**. Un `arguments` sintácticamente válido puede seguir siendo inválido para el modelo Pydantic; y un JSON válido puede ser falso. La validación no reemplaza los tests ni los permisos.
 
-## 🧩 Labs BYO Harness
+## 🧩 Labs de harness
 
-El botón **🧩 Labs BYO** abre cuatro laboratorios independientes de la corrida. Sirven para ver de cerca decisiones que el curso de BYO Harness trata como capítulos propios:
+El botón **🧩 Labs** abre diez laboratorios independientes de la corrida. Sirven para ver de cerca decisiones que un harness real toma todo el tiempo:
 
 | Lab | Qué muestra | Concepto que fija |
 |---|---|---|
@@ -96,8 +96,14 @@ El botón **🧩 Labs BYO** abre cuatro laboratorios independientes de la corrid
 | **② Compactación** | `NoCompaction`, `SlidingWindow` y `Summarize`, con presupuesto y `SafeSplitPoint` | Compactar es lossy, cambia el prefijo de caché y no puede separar `tool_use` de `tool_result` |
 | **③ Tool registry** | Activar/desactivar tools, agregar `web_fetch`, ordenar `Definitions()` y probar una tool ausente | El registry une schema (`definition()`) y ejecución (`execute()`) |
 | **④ Slash commands** | Mini REPL con `/help`, `/model`, `/tools`, `/tokens`, `/compact`, `/clear` | Lo que empieza con `/` lo intercepta el harness; no llega al modelo |
+| **⑤ Memoria** | Sesión 1 que guarda una preferencia y sesión 2 con `Preamble`, `Recall` o sin memoria | La memoria persiste fuera de la ventana y se paga distinto según cómo se inyecte |
+| **⑥ AGENTS.md** | Editar el archivo, recargarlo y ver el system armado, los tokens y la invalidación de caché | `AGENTS.md` es contexto de proyecto escrito por humanos, no memoria del agente |
+| **⑦ Puntos de extensión** | Provider / Tool / Compaction / Memory / Command con interfaz, implementación y una línea de composición | El loop no debería conocer las implementaciones concretas |
+| **⑧ Desafíos** | Cinco ejercicios con criterio de aceptación, pista y progreso local | Extender el harness sin reescribir el loop |
+| **⑨ Tool result real** | Pegar un output, elegir `head`, `tail` o `head+tail` y medir tokens antes/después | Truncar un `tool_result` no es lo mismo que compactar el historial |
+| **⑩ Streaming cancel** | Cortar un stream a mitad, ver eventos, costo parcial y qué pasa con un `tool_use` incompleto | Cancelar ahorra decode, pero no devuelve input ni TTFT |
 
-Cada lab tiene estado visible, acción y resultado. No modifican la simulación principal ni el progreso guardado.
+Cada lab tiene contrato, estado visible, acción y resultado. No modifican la simulación principal; el progreso de los desafíos se guarda en `localStorage`.
 
 ## Ruta de aprendizaje (13 paradas)
 
@@ -183,19 +189,55 @@ El **glosario** del panel izquierdo tiene 58 términos con buscador.
 - Las tools MCP se declaran con su nombre namespaced (`mcp__github__create_issue`) y su schema, como en un payload real.
 - El **streaming** muestra los eventos SSE con la forma de Anthropic (`message_start`, `content_block_delta`, `input_json_delta`, `message_delta`, `message_stop`); OpenAI usa `data: {"choices":[{"delta":…}]}` y `[DONE]`.
 - Los **nombres de modelo** y endpoints son ilustrativos.
-- El comportamiento del harness (permisos, truncado, compactación, subagentes, MCP) refleja el diseño de OpenCode, no una ejecución real.
-
-## Ideas para seguir extendiendo
-
-1. **Memoria entre sesiones**: `Preamble`, `Save`/`Recall` y `.harness/` con comparación entre sesión limpia y sesión con memoria.
-2. **Lab de AGENTS.md**: editar el archivo, recargar y ver el cambio de prefijo/caché.
-3. **Mapa de puntos de extensión**: Provider / Tool / Compaction / Memory / Command.
-4. **Desafíos**: 3–5 ejercicios con criterios de aceptación, sin auto-grading.
-5. **Tool result real**: pegar un output y ver el truncado y el impacto en tokens.
-6. **Streaming con cancelación**: medir cuánto se factura si el usuario corta a mitad del stream.
-
-El detalle y las prioridades están en [`docs/roadmap.md`](docs/roadmap.md).
+- El comportamiento del harness (permisos, truncado, compactación, subagentes, MCP) refleja decisiones de diseño visibles en OpenCode, Claude Code, Aider y BYO Harness, no una ejecución real.
 
 ## Licencia
 
 GPLv3. Ver [`LICENSE`](LICENSE).
+
+## Referencias y fuentes de inspiración
+
+Estas fuentes informaron el diseño del simulador. No implican endorsement ni copia de contenido: el código es una reconstrucción didáctica y simplificada. BYO Harness es una referencia entre varias.
+
+### Cursos y proyectos de harness
+
+- [BYO Harness — currículum](https://www.byoharness.dev/es/#curriculum) y [repositorio `betta-tech/byo-coding-agent`](https://github.com/betta-tech/byo-coding-agent) (MIT): una de las inspiraciones principales para los labs y el mapa curricular.
+- [OpenCode — documentación](https://opencode.ai/docs/) y [repositorio](https://github.com/anomalyco/opencode): loop, tools, permisos, agentes, comandos y configuración.
+- [Claude Code — documentación](https://docs.anthropic.com/en/docs/claude-code/overview): permisos, `AGENTS.md`, skills, subagentes y flujo de trabajo.
+- [Aider](https://github.com/Aider-AI/aider): edición de código, diffs y aprobación de cambios.
+- [Anthropic Academy — Building with the Claude API](https://anthropic.skilljar.com/claude-with-the-anthropic-api): curso de tool use, streaming y prompt caching.
+
+### APIs, protocolos y contratos
+
+- [Anthropic — Messages API](https://docs.anthropic.com/en/api/messages)
+- [Anthropic — Tool use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)
+- [Anthropic — Prompt caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
+- [Anthropic — Streaming messages](https://docs.anthropic.com/en/docs/build-with-claude/streaming)
+- [OpenAI — Function calling](https://platform.openai.com/docs/guides/function-calling)
+- [OpenAI — Responses vs. Chat Completions](https://platform.openai.com/docs/guides/responses-vs-chat-completions)
+- [OpenAI — Structured outputs](https://platform.openai.com/docs/guides/structured-outputs)
+- [Model Context Protocol — Specification](https://modelcontextprotocol.io/specification/2025-06-18)
+- [JSON Schema — Understanding JSON Schema](https://json-schema.org/understanding-json-schema/)
+- [MDN — Server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
+
+### Ingeniería de agentes y contexto
+
+- [Anthropic — Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)
+- [Anthropic — Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents)
+- [Anthropic — Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
+- [Anthropic — Claude Code best practices](https://www.anthropic.com/engineering/claude-code-best-practices)
+- [12-Factor Agents](https://github.com/humanlayer/12-factor-agents)
+- [OpenAI Agents SDK](https://github.com/openai/openai-agents-python)
+- [LangGraph](https://github.com/langchain-ai/langgraph)
+- [Pydantic AI](https://ai.pydantic.dev/)
+
+### Papers y estudios
+
+- [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
+- [Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172)
+- [Context Rot: How Increasing Input Tokens Impacts LLM Performance](https://research.trychroma.com/context-rot)
+
+### Validación y modelos de datos
+
+- [Pydantic — Models](https://docs.pydantic.dev/latest/concepts/models/)
+- [Pydantic — JSON Schema](https://docs.pydantic.dev/latest/concepts/json_schema/)

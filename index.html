@@ -246,7 +246,7 @@
   .panel h2{display:flex; align-items:center; gap:8px;}
   .loopPanel.collapsed .loopBody{display:none;}
 
-  /* ===== labs BYO Harness: diff, compactación, registry, comandos ===== */
+  /* ===== labs de harness: diff, compactación, registry, comandos, memoria ===== */
   .labIntro{font-size:12.3px; line-height:1.55; color:var(--muted); margin-bottom:12px;}
   .labIntro b{color:var(--text);}
   .labsTabs{display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--border); padding-bottom:9px; margin-bottom:12px;}
@@ -317,6 +317,41 @@
   .labCmdForm input{flex:1; font-family:ui-monospace,monospace; font-size:12px;}
   .labCmdForm .btn{white-space:nowrap;}
   .labMiniCode{font-size:10.5px; line-height:1.5; max-height:190px; overflow:auto; margin-top:8px;}
+  .labTextarea{width:100%; min-height:130px; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:7px; padding:8px 10px; font-family:ui-monospace,'Cascadia Code',monospace; font-size:11px; line-height:1.5; resize:vertical;}
+  .labTextarea:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .labRange{width:100%; accent-color:var(--accent); margin:5px 0 2px;}
+  .labStack{display:flex; flex-direction:column; gap:8px;}
+  .labPromptBox{background:var(--panel); border:1px solid var(--border); border-radius:7px; padding:8px 10px; font-size:11.5px; line-height:1.5; color:var(--muted);}
+  .labPromptBox b{color:var(--text);}
+  .labPromptBox code{background:var(--panel2); border-radius:3px; padding:0 3px; font-size:10.5px;}
+  .labSeg{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .labSeg .btn{padding:4px 8px; font-size:11px;}
+  .labSeg .btn.on{background:rgba(88,166,255,.15); border-color:rgba(88,166,255,.55); color:var(--accent);}
+  .labChallenge{border:1px solid var(--border); background:var(--panel); border-radius:8px; padding:9px 10px; margin-top:7px;}
+  .labChallenge.done{border-color:rgba(63,185,80,.4); background:rgba(63,185,80,.04);}
+  .labChallenge .labChHead{display:flex; gap:8px; align-items:flex-start;}
+  .labChallenge .labChHead input{accent-color:var(--accent); margin-top:3px;}
+  .labChallenge b{font-size:12px; line-height:1.35;}
+  .labChallenge p{font-size:11.5px; color:var(--muted); line-height:1.45; margin:5px 0 0 22px;}
+  .labChallenge details{margin:5px 0 0 22px; font-size:11px; color:var(--muted);}
+  .labChallenge summary{cursor:pointer; color:var(--accent);}
+  .labExtGrid{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin-bottom:10px;}
+  @media(max-width:900px){.labExtGrid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  .labExtBtn{background:var(--panel); border:1px solid var(--border); border-radius:7px; padding:8px; color:var(--muted); font-size:11px; cursor:pointer; text-align:left; line-height:1.35;}
+  .labExtBtn b{display:block; color:var(--text); font-size:11.5px; margin-bottom:2px;}
+  .labExtBtn:hover{border-color:var(--accent);}
+  .labExtBtn.on{border-color:var(--accent); background:rgba(88,166,255,.1);}
+  .labExtBtn.on b{color:var(--accent);}
+  .labEvents{background:var(--bg); border:1px solid var(--border); border-radius:7px; padding:7px 9px; max-height:220px; overflow:auto; font-family:ui-monospace,'Cascadia Code',monospace; font-size:10.5px; line-height:1.55;}
+  .labEvent{padding:1px 0; color:var(--muted);}
+  .labEvent b{color:var(--accent); font-weight:600;}
+  .labEvent.ok b{color:var(--green);}
+  .labEvent.err b{color:var(--red);}
+  .labBar{height:12px; background:var(--bg); border:1px solid var(--border); border-radius:6px; overflow:hidden; display:flex; margin-top:6px;}
+  .labBar span{display:block; height:100%;}
+  .labBar .in{background:var(--accent);}
+  .labBar .out{background:var(--green);}
+  .labBar .waste{background:var(--red);}
 
   /* ===== modales: sandbox, comparador, export ===== */
   .modal{position:fixed; inset:0; background:rgba(0,0,0,.68); display:none; align-items:flex-start; justify-content:center; padding:4vh 16px; z-index:80; overflow:auto;}
@@ -376,11 +411,11 @@
   <div class="headerRow">
     <div>
       <h1>⚙️ Simulador del Harness (OpenCode)</h1>
-      <p>Cada paso desde que enviás tu mensaje hasta que recibís la respuesta — system prompt, agentic loop, context window y el recorrido real de los datos por el modelo. <b>13 escenarios</b> + <b>labs BYO Harness</b>, loop interactivo, concepto clave, payload real, quiz, sandbox y progreso.</p>
+      <p>Cada paso desde que enviás tu mensaje hasta que recibís la respuesta — system prompt, agentic loop, context window y el recorrido real de los datos por el modelo. <b>13 escenarios</b> + <b>labs interactivos</b>, loop interactivo, concepto clave, payload real, quiz, sandbox y progreso.</p>
       <p class="termLegend">Los términos técnicos en inglés tienen <span class="termSample">subrayado punteado</span>: pasá el mouse (o tocá) para ver su explicación.</p>
     </div>
     <div class="headerTools">
-      <button class="btn" id="btnLabs" title="Labs BYO Harness: diff approval, compactación, tool registry y slash commands">🧩 Labs BYO</button>
+      <button class="btn" id="btnLabs" title="Labs de harness: diff approval, compactación, tool registry, comandos, memoria, AGENTS.md, extensiones, desafíos, tool results y streaming">🧩 Labs</button>
       <button class="btn" id="btnSandbox" title="Editar el JSON del request y ver tokens + validación">🧪 Sandbox</button>
       <button class="btn" id="btnCompare" title="Comparar dos configuraciones lado a lado">⚖️ Comparar</button>
       <button class="btn" id="btnExport" title="Exportar la traza a Markdown, JSON o CSV">📤 Exportar</button>
@@ -4738,8 +4773,9 @@ function openExport(){
 }
 
 /* =========================================================
-   LABS BYO HARNESS — extensiones pedagógicas
+   LABS DE HARNESS — extensiones pedagógicas
    §05 slash commands · §07 compaction strategies · §09 tool registry · §18 diff approval
+   §10 extension points · §15 AGENTS.md · §19 agent memory
 ========================================================= */
 const LAB_TOOL_DEFS = [
   {name:'read',  desc:'Lee un archivo del proyecto.',              params:'path, offset?, limit?', tok:118},
@@ -4761,6 +4797,60 @@ const LAB_MSGS = [
   {role:'user',      kind:'tool_result', tok:140,  text:'tool_result call_03 · edit aplicado', pair:'call_03'},
   {role:'assistant', kind:'text',        tok:220,  text:'Listo. Corrí los tests y pasan.'}
 ];
+const LAB_TOOL_SAMPLE = [
+  '$ pytest -q',
+  ...Array.from({length:70},(_,i)=>`tests/test_parser.py::test_case_${String(i+1).padStart(2,'0')} PASSED [${String(i+1).padStart(2,'0')}%]`),
+  'FAILED tests/test_parser.py::test_eval - AssertionError: expected dict, got list',
+  '2 failed, 68 passed in 1.42s'
+].join('\n');
+const LAB_MEMORY_TEXT = [
+  '# Memoria del agente',
+  '- Framework de tests: pytest',
+  '- Comentarios y commits: español',
+  '- Evitar: vendor/ (generado)',
+  '- Última tarea: parser.py'
+].join('\n');
+const LAB_AGENTS_DEFAULT = [
+  '# Proyecto',
+  '- Tests: pytest -q',
+  '- Formato: ruff + black',
+  '- No tocar vendor/',
+  '- Los errores se devuelven como tool_result'
+].join('\n');
+const LAB_CHALLENGES = [
+  {id:'web_fetch', title:'Agregar una tool al registry', desc:'Sumá web_fetch, activala y comprobá cómo cambia Definitions() y el prefijo de caché.', hint:'Una tool = definition() + execute() + una entrada en el registry. No toques el loop.'},
+  {id:'safe_split', title:'Implementar SafeSplitPoint', desc:'Hacé que un corte de compactación nunca separe un tool_use de su tool_result.', hint:'Si el corte cae en un tool_result, retrocedé hasta el tool_use que comparte el id.'},
+  {id:'agents', title:'Escribir un AGENTS.md útil', desc:'Agregá convenciones de test, formato y zonas prohibidas; medí tokens y caché.', hint:'Instrucciones cortas, verificables y específicas del proyecto. No metas secretos.'},
+  {id:'memory', title:'Comparar Preamble vs Recall', desc:'Medí cuándo conviene inyectar memoria en el system y cuándo consultarla con una tool.', hint:'Preamble paga tokens en cada request; Recall solo cuando hace falta.'},
+  {id:'cancel', title:'Medir una cancelación de streaming', desc:'Cancelá a mitad de la generación y separá input, output y trabajo desperdiciado.', hint:'El input y el TTFT ya se pagaron. No ejecutes un tool_use con argumentos incompletos.'}
+];
+const LAB_EXTENSIONS = {
+  provider: {
+    label:'Provider', who:'modelo / API', file:'providers/anthropic.py',
+    code:['class Provider(Protocol):','    def send(self, messages, tools) -> Response: ...','','PROVIDER = AnthropicProvider()  # o OpenAIProvider()'].join('\n'),
+    note:'El loop no sabe qué proveedor usa: pide un Response y recibe tool_use o texto. Cambiar de proveedor es cambiar una línea de composición.'
+  },
+  tool: {
+    label:'Tool', who:'harness', file:'tools/read.py',
+    code:['class Tool(Protocol):','    def definition(self) -> dict: ...','    def execute(self, args: dict) -> str: ...','','REGISTRY = {t.name: t for t in [Read(), Grep(), Edit()]}'].join('\n'),
+    note:'definition() es lo que ve el modelo; execute() es lo que corre el harness. El registry mantiene las dos mitades juntas y el orden estable.'
+  },
+  compact: {
+    label:'Compaction', who:'harness', file:'compaction/sliding.py',
+    code:['class Compaction(Protocol):','    def compact(self, messages: list[Message]) -> list[Message]: ...','','COMPACTOR = SlidingWindow(budget=2400)'].join('\n'),
+    note:'Compactar es una política del harness. NoCompaction, SlidingWindow y Summarize comparten interfaz; el loop solo llama compact() antes del request.'
+  },
+  memory: {
+    label:'Memory', who:'harness + disco', file:'memory/store.py',
+    code:['class Memory(Protocol):','    def preamble(self) -> str: ...','    def save(self, note: str) -> None: ...','    def recall(self, query: str) -> list[str]: ...','','MEMORY = FileMemory(".harness/memory.md")'].join('\n'),
+    note:'La memoria persiste fuera de la ventana. Preamble la inyecta siempre; Recall la consulta bajo demanda. Es dato, no instrucción de sistema.'
+  },
+  command: {
+    label:'Command', who:'harness / TUI', file:'commands/registry.py',
+    code:['COMMANDS = {','  "help": cmd_help,','  "model": cmd_model,','  "compact": cmd_compact,','  "tokens": cmd_tokens,','}','','dispatch("/compact")  # no llega al modelo'].join('\n'),
+    note:'Los comandos son una capa del harness: interceptan la línea antes de armar el request. Pueden mutar modelo, historial o presupuesto.'
+  }
+};
 let labTab = 'diff';
 let labState = {
   diff: null,
@@ -4772,6 +4862,20 @@ let labState = {
   toolSort: true,
   toolDirty: false,
   toolTest: null,
+  memorySaved: false,
+  memoryMode: 'none',
+  agentsLoaded: true,
+  agentsText: LAB_AGENTS_DEFAULT,
+  agentsVersion: 1,
+  agentsCache: 'hit',
+  ext: 'provider',
+  challenges: (()=>{ try{ return JSON.parse(localStorage.getItem('harness-labs-challenges')||'{}')||{}; }catch(e){ return {}; } })(),
+  toolResultText: LAB_TOOL_SAMPLE,
+  toolResultMax: 300,
+  toolResultStrategy: 'head+tail',
+  streamAt: 250,
+  streamStatus: 'idle',
+  streamModel: 'sonnet',
   slash: {
     model: 'claude-sonnet-4-5',
     messages: 4,
@@ -4827,7 +4931,7 @@ function labCompactionData(){
 }
 function openLabs(tab){
   if(tab) labTab = tab;
-  openModal('🧩 Labs BYO Harness', labsShell());
+  openModal('🧩 Labs de harness', labsShell());
   bindLabs();
 }
 function renderLabBody(){
@@ -4842,9 +4946,15 @@ function labsShell(){
     ['diff','① Diff approval'],
     ['compact','② Compactación'],
     ['registry','③ Tool registry'],
-    ['slash','④ Slash commands']
+    ['slash','④ Slash commands'],
+    ['memory','⑤ Memoria'],
+    ['agents','⑥ AGENTS.md'],
+    ['extensions','⑦ Puntos de extensión'],
+    ['challenges','⑧ Desafíos'],
+    ['toolresult','⑨ Tool result real'],
+    ['cancel','⑩ Streaming cancel']
   ].map(([id,label])=>`<button class="labTab ${labTab===id?'on':''}" data-lab="${id}">${label}</button>`).join('');
-  return `<div class="labIntro">Cuatro laboratorios extraídos de <a href="https://www.byoharness.dev/es/#curriculum" target="_blank" rel="noopener"><b>Build Your Own Coding Agent</b></a> (BYO Harness, MIT). No modifican la corrida: son simulaciones chicas para ver una decisión del harness de cerca. Cada pestaña muestra el contrato, el estado y el resultado.</div>
+  return `<div class="labIntro">Laboratorios interactivos sobre decisiones del harness. Toman como punto de partida <a href="https://www.byoharness.dev/es/#curriculum" target="_blank" rel="noopener"><b>BYO Harness</b></a> y se complementan con documentación de proveedores, papers y repositorios de agentes. No modifican la corrida: cada pestaña muestra contrato, estado y resultado. Las referencias están en el README del repositorio.</div>
     <div class="labsTabs" id="labsTabs">${tabs}</div>
     <div id="labBody">${labsBody()}</div>`;
 }
@@ -4852,6 +4962,12 @@ function labsBody(){
   if(labTab === 'compact') return labCompactionBody();
   if(labTab === 'registry') return labRegistryBody();
   if(labTab === 'slash') return labSlashBody();
+  if(labTab === 'memory') return labMemoryBody();
+  if(labTab === 'agents') return labAgentsBody();
+  if(labTab === 'extensions') return labExtensionsBody();
+  if(labTab === 'challenges') return labChallengesBody();
+  if(labTab === 'toolresult') return labToolResultBody();
+  if(labTab === 'cancel') return labStreamCancelBody();
   return labDiffBody();
 }
 
@@ -5078,6 +5194,265 @@ function labSlashBody(){
     </div>
   </div>`;
 }
+/* ---------- §19: memoria entre sesiones ---------- */
+function labMemoryBody(){
+  const saved = labState.memorySaved;
+  const mode = labState.memoryMode;
+  const extra = !saved ? 0 : mode === 'preamble' ? 180 : mode === 'recall' ? 90 : 0;
+  let status = '<div class="labStatus info">Sesión 2 sin memoria: el agente no sabe qué pasó ayer.</div>';
+  let response = 'No tengo memoria de sesiones anteriores. ¿Qué framework de tests usás?';
+  let request = 'system: base\nmessages: [user: ¿Qué framework usamos?]';
+  if(!saved && mode !== 'none'){
+    status = '<div class="labStatus err">No hay nada guardado en <code>.harness/memory.md</code>. Guardá primero la preferencia en la sesión 1.</div>';
+  } else if(mode === 'preamble'){
+    status = '<div class="labStatus ok">Preamble: la memoria se inyecta en el system de cada request. Es simple, pero paga tokens siempre.</div>';
+    response = 'Usamos pytest y comentarios en español. Lo tengo en la memoria del proyecto.';
+    request = 'system: base + AGENTS.md + preamble(".harness/memory.md")\nmessages: [user: ¿Qué framework usamos?]';
+  } else if(mode === 'recall'){
+    status = '<div class="labStatus ok">Recall: el modelo pide memoria bajo demanda. Ahorra tokens si no hace falta, pero agrega una tool call.</div>';
+    response = 'pytest. Lo consulté con recall("framework de tests").';
+    request = 'system: base + AGENTS.md\nassistant → tool_use recall("framework de tests")\ntool_result: "Framework de tests: pytest"';
+  }
+  return `<div class="labGrid">
+    <div class="labCard">
+      <h4>1 · Sesión 1: el agente aprende algo</h4>
+      <div class="labPromptBox"><b>user</b> Para este proyecto usá pytest y comentarios en español.</div>
+      <div class="labPromptBox" style="margin-top:6px"><b>assistant</b> Lo guardo como preferencia persistente.</div>
+      <div class="labPromptBox" style="margin-top:6px"><b>tool_use</b> memory_save({note:"pytest + comentarios en español"})</div>
+      <div class="labActions">
+        <button class="btn ${saved?'':'primary'}" data-lab-action="memory-save">💾 Guardar en memoria</button>
+        <button class="btn" data-lab-action="memory-clear" ${saved?'':'disabled'}>🗑 Borrar memoria</button>
+      </div>
+      ${saved?`<div class="labStatus ok" style="margin-top:9px">Memoria persistida en <code>.harness/memory.md</code>:</div><pre class="labCode labMiniCode">${esc(LAB_MEMORY_TEXT)}</pre>`:'<div class="labStatus warn" style="margin-top:9px">Todavía no hay archivo de memoria. La sesión 2 arranca desde cero.</div>'}
+    </div>
+    <div class="labCard">
+      <h4>2 · Sesión 2: contexto nuevo</h4>
+      <div class="labSeg">
+        <button class="btn ${mode==='none'?'on':''}" data-lab-action="memory-mode" data-val="none">Sin memoria</button>
+        <button class="btn ${mode==='preamble'?'on':''}" data-lab-action="memory-mode" data-val="preamble">Preamble</button>
+        <button class="btn ${mode==='recall'?'on':''}" data-lab-action="memory-mode" data-val="recall">Recall</button>
+      </div>
+      <div class="labPromptBox" style="margin-top:8px"><b>user</b> ¿Qué framework de tests usamos?</div>
+      <div class="labPromptBox" style="margin-top:6px"><b>assistant</b> ${esc(response)}</div>
+      <div class="labKpis">
+        <div class="labKpi">Tokens extra<b>+${extra}</b></div>
+        <div class="labKpi ${saved?'good':'bad'}">Memoria<b>${saved?'persistida':'vacía'}</b></div>
+        <div class="labKpi ${mode==='recall'?'warn':'good'}">Costo por request<b>${!saved?'sin memoria':mode==='preamble'?'siempre':mode==='recall'?'bajo demanda':'cero'}</b></div>
+      </div>
+      ${status}
+      <pre class="labCode labMiniCode">${esc(request)}</pre>
+    </div>
+  </div>
+  <div class="labStatus info" style="margin-top:10px"><b>Memoria ≠ contexto.</b> La memoria es un archivo o base fuera de la ventana; el contexto es lo que viaja en este request. Preamble inyecta siempre; Recall consulta bajo demanda. Tratá la memoria como dato no confiable: puede estar envenenada, filtrada o desactualizada. Guardala en <code>.harness/</code> y agregala a <code>.gitignore</code>.</div>`;
+}
+
+/* ---------- §15: AGENTS.md ---------- */
+function labAgentsBody(){
+  const loaded = labState.agentsLoaded;
+  const agentsTok = loaded ? est(labState.agentsText) : 0;
+  const baseTok = 420;
+  const totalTok = baseTok + agentsTok;
+  return `<div class="labGrid">
+    <div class="labCard">
+      <h4>AGENTS.md del proyecto</h4>
+      <textarea class="labTextarea" id="labAgents" data-lab-input="agents" ${loaded?'':'disabled'} spellcheck="false">${esc(labState.agentsText)}</textarea>
+      <div class="labActions">
+        <button class="btn primary" data-lab-action="agents-reload" ${loaded?'':'disabled'}>↻ Recargar AGENTS.md</button>
+        <button class="btn" data-lab-action="agents-remove" ${loaded?'':'disabled'}>Quitar</button>
+        <button class="btn" data-lab-action="agents-reset">↺ Reset</button>
+      </div>
+      <div class="labKpis">
+        <div class="labKpi">AGENTS.md<b>~${agentsTok} tok</b></div>
+        <div class="labKpi">System total<b>~${totalTok} tok</b></div>
+        <div class="labKpi ${labState.agentsCache==='hit'?'good':'bad'}">Prefijo de caché<b>${loaded?labState.agentsCache:'sin archivo'}</b></div>
+      </div>
+      ${!loaded?'':labState.agentsCache==='miss'?'<div class="labStatus warn">Editaste el archivo y recargaste: el prefijo estable cambió y la caché se invalida desde AGENTS.md. La próxima llamada paga prefill otra vez.</div>':'<div class="labStatus info">El prefijo está estable: el proveedor puede reutilizar la caché del system + AGENTS.md.</div>'}
+    </div>
+    <div class="labCard">
+      <h4>Cómo se arma el system</h4>
+      <pre class="labCode labMiniCode">${esc([
+        'system = "\\n\\n".join([',
+        '  BASE_PROMPT,',
+        '  agents_md if exists("AGENTS.md") else "",',
+        '  skills_preamble,',
+        '  memory_preamble,',
+        '])',
+        '',
+        '# AGENTS.md no lo escribe el modelo:',
+        '# lo descubre y lo concatena el harness.'
+      ].join('\n'))}</pre>
+      <div class="labPromptBox" style="margin-top:8px"><b>Jerarquía:</b> system base → AGENTS.md → skills → memoria → mensaje del usuario. Si hay conflicto, el harness decide el orden y el modelo no puede “editar” las reglas del system.</div>
+      <div class="labPromptBox" style="margin-top:6px"><b>Tokens:</b> con AGENTS.md cargado el system pasa de ~${baseTok} a ~${totalTok} tokens. Ese costo se paga en cada request y afecta la ventana disponible.</div>
+      ${loaded?'<div class="labStatus ok">AGENTS.md cargado. Editá una línea, recargá y mirá cómo cambia el prefijo.</div>':'<div class="labStatus warn">AGENTS.md no cargado: el agente pierde convenciones del proyecto.</div>'}
+    </div>
+  </div>
+  <div class="labStatus info" style="margin-top:10px">AGENTS.md es contexto de proyecto escrito por humanos. No es memoria del agente ni una tool: es un archivo que el harness descubre al iniciar la sesión y concatena al system. Si cambia, el prefijo de caché se invalida.</div>`;
+}
+
+/* ---------- §10: puntos de extensión ---------- */
+function labExtensionsBody(){
+  const keys = Object.keys(LAB_EXTENSIONS);
+  const cur = LAB_EXTENSIONS[labState.ext] || LAB_EXTENSIONS.provider;
+  const cards = keys.map(k=>{
+    const e = LAB_EXTENSIONS[k];
+    return `<button class="labExtBtn ${labState.ext===k?'on':''}" data-lab-action="ext" data-ext="${k}"><b>${e.label}</b>${e.who}</button>`;
+  }).join('');
+  return `<div class="labExtGrid">${cards}</div>
+  <div class="labGrid">
+    <div class="labCard">
+      <h4>${cur.label} · ${cur.who}</h4>
+      <pre class="labCode">${esc(cur.code)}</pre>
+      <p><b>Archivo:</b> <code>${esc(cur.file)}</code></p>
+    </div>
+    <div class="labCard">
+      <h4>Qué cambia en el loop</h4>
+      <p>${esc(cur.note)}</p>
+      <div class="labPromptBox" style="margin-top:8px"><b>Patrón:</b> interfaz → implementaciones intercambiables → una línea de composición. El loop no conoce la implementación concreta.</div>
+      <div class="labStatus info" style="margin-top:8px">Tool es aditiva: podés tener muchas a la vez en un registry. Provider, Compaction y Memory suelen ser excluyentes: elegís una implementación por sesión.</div>
+    </div>
+  </div>
+  <div class="labStatus info" style="margin-top:10px">Estas cinco costuras son las que hacen que un harness se pueda extender sin reescribir el loop. Si una tool nueva obliga a tocar el loop, el diseño todavía no está desacoplado.</div>`;
+}
+
+/* ---------- Desafíos ---------- */
+function labChallengesBody(){
+  const done = LAB_CHALLENGES.filter(c=>labState.challenges[c.id]).length;
+  const pct = Math.round(done/LAB_CHALLENGES.length*100);
+  const cards = LAB_CHALLENGES.map(c=>{
+    const on = !!labState.challenges[c.id];
+    return `<div class="labChallenge ${on?'done':''}">
+      <div class="labChHead"><input type="checkbox" data-challenge="${c.id}" ${on?'checked':''} aria-label="Marcar ${esc(c.title)}"><b>${esc(c.title)}</b></div>
+      <p>${esc(c.desc)}</p>
+      <details><summary>Ver pista</summary>${esc(c.hint)}</details>
+    </div>`;
+  }).join('');
+  return `<div class="labCard">
+    <h4>Progreso: ${done}/${LAB_CHALLENGES.length} · ${pct}%</h4>
+    <div class="labBar"><span class="in" style="width:${pct}%"></span></div>
+    <div class="labStatus info" style="margin-top:9px">No hay auto-grading: marcá un desafío cuando lo hayas probado en el simulador o en tu harness. El estado se guarda en <code>localStorage</code>.</div>
+    ${cards}
+  </div>
+  <div class="labStatus info" style="margin-top:10px">Los desafíos están pensados para extensiones reales: agregar una tool, implementar SafeSplitPoint, escribir AGENTS.md, comparar memoria y medir cancelación.</div>`;
+}
+
+/* ---------- Tool result real ---------- */
+function labToolResultData(){
+  const text = String(labState.toolResultText || '');
+  const total = est(text);
+  const max = +labState.toolResultMax || 300;
+  const strategy = labState.toolResultStrategy;
+  let out = text;
+  if(total > max){
+    const maxChars = max * 4;
+    if(strategy === 'head'){
+      out = text.slice(0, maxChars) + '\n[truncated]';
+    } else if(strategy === 'tail'){
+      out = '[truncated]\n' + text.slice(-maxChars);
+    } else {
+      const half = Math.floor(maxChars / 2);
+      out = text.slice(0, half) + '\n[... truncated ...]\n' + text.slice(-half);
+    }
+  }
+  const sent = est(out);
+  return {text, total, max, strategy, out, sent, saved: Math.max(0, total - sent)};
+}
+function labToolResultBody(){
+  const d = labToolResultData();
+  const pct = d.total ? Math.round(d.sent/d.total*100) : 0;
+  return `<div class="labGrid">
+    <div class="labCard">
+      <h4>Output crudo de la tool</h4>
+      <textarea class="labTextarea" id="labToolText" data-lab-input="tool-text" spellcheck="false">${esc(labState.toolResultText)}</textarea>
+      <div class="labActions">
+        <button class="btn primary" data-lab-action="tool-process">Procesar output</button>
+        <button class="btn" data-lab-action="tool-preset" data-preset="short">Salida corta</button>
+        <button class="btn" data-lab-action="tool-preset" data-preset="long">Salida larga</button>
+        <button class="btn" data-lab-action="tool-preset" data-preset="error">Salida con error</button>
+      </div>
+      <div class="labControlRow" style="margin-top:9px">
+        <label>Máximo para el modelo
+          <input class="labRange" type="range" min="80" max="1200" step="20" value="${labState.toolResultMax}" data-lab-input="tool-max">
+        </label>
+        <span class="labKpi">${labState.toolResultMax} tok</span>
+      </div>
+      <div class="labSeg">
+        <button class="btn ${d.strategy==='head'?'on':''}" data-lab-action="tool-strategy" data-val="head">head</button>
+        <button class="btn ${d.strategy==='tail'?'on':''}" data-lab-action="tool-strategy" data-val="tail">tail</button>
+        <button class="btn ${d.strategy==='head+tail'?'on':''}" data-lab-action="tool-strategy" data-val="head+tail">head + tail</button>
+      </div>
+    </div>
+    <div class="labCard">
+      <h4>Lo que entra al historial</h4>
+      <div class="labKpis">
+        <div class="labKpi">Original<b>${d.total.toLocaleString('es')} tok</b></div>
+        <div class="labKpi good">Enviado<b>${d.sent.toLocaleString('es')} tok</b></div>
+        <div class="labKpi ${d.saved?'warn':'good'}">Ahorro<b>${d.saved.toLocaleString('es')} tok</b></div>
+      </div>
+      <div class="labBar"><span class="in" style="width:${pct}%"></span><span class="waste" style="width:${100-pct}%"></span></div>
+      <div class="hint" style="margin-top:5px">${d.saved?`Se descarta ${100-pct}% del output. El modelo no puede ver lo omitido.`:'Entra completo: no hay truncado.'}</div>
+      <pre class="labCode labMiniCode" style="max-height:220px">${esc(d.out)}</pre>
+      <div class="labStatus ${d.strategy==='head'?'warn':'info'}" style="margin-top:8px">${d.strategy==='head'?'Head corta el final: podés perder el error o el resumen.':d.strategy==='tail'?'Tail conserva el final: podés perder el contexto del inicio.':'Head + tail conserva el inicio y el final; suele ser mejor para logs largos.'}</div>
+    </div>
+  </div>
+  <div class="labStatus info" style="margin-top:10px"><b>Truncar no es compactar.</b> Truncar recorta un tool result antes de agregarlo al historial; compactar reemplaza historial viejo por un resumen. En ambos casos el modelo pierde información: elegí qué conservar y dejá una marca como <code>[truncated]</code>.</div>`;
+}
+
+/* ---------- Streaming con cancelación ---------- */
+function labStreamCancelBody(){
+  const P = PRICES[labState.streamModel] || PRICES.sonnet;
+  const input = 6200, completeOut = 800, at = +labState.streamAt || 250;
+  const cancelled = labState.streamStatus === 'cancelled';
+  const idle = labState.streamStatus === 'idle';
+  const output = cancelled ? at : completeOut;
+  const cost = input/1e6*P.in + output/1e6*P.out;
+  const completeCost = input/1e6*P.in + completeOut/1e6*P.out;
+  const waste = cancelled ? Math.max(0, completeCost - cost) : 0;
+  const events = idle
+    ? '<div class="labEvent">Esperando simulación: elegí cancelar a mitad o completar el stream.</div>'
+    : [
+      `<div class="labEvent ok"><b>message_start</b> · usage.input_tokens=${input}</div>`,
+      `<div class="labEvent"><b>content_block_delta</b> × ${cancelled?at:completeOut} · text/input_json_delta</div>`,
+      cancelled ? `<div class="labEvent err"><b>client abort</b> · AbortController.abort() a los ${at} tokens</div>` : `<div class="labEvent ok"><b>message_delta</b> · stop_reason=end_turn · usage.output_tokens=${completeOut}</div>`,
+      cancelled ? `<div class="labEvent err"><b>sin message_stop</b> · el stream se cortó; los argumentos de tool_use pueden estar incompletos</div>` : `<div class="labEvent ok"><b>message_stop</b> · stream completo</div>`
+    ].join('');
+  return `<div class="labGrid">
+    <div class="labCard">
+      <h4>Simulá un stream</h4>
+      <div class="labControlRow">
+        <label>Modelo
+          <select data-lab-input="stream-model">
+            <option value="sonnet" ${labState.streamModel==='sonnet'?'selected':''}>Claude Sonnet 4.5</option>
+            <option value="glm" ${labState.streamModel==='glm'?'selected':''}>GLM 4.7</option>
+            <option value="opus" ${labState.streamModel==='opus'?'selected':''}>Claude Opus 4.6</option>
+          </select>
+        </label>
+      </div>
+      <label>Cortar a los <b>${at}</b> tokens de output
+        <input class="labRange" type="range" min="20" max="780" step="20" value="${at}" data-lab-input="stream-at">
+      </label>
+      <div class="labActions">
+        <button class="btn" data-lab-action="stream-cancel">⛔ Cancelar a ${at} tok</button>
+        <button class="btn primary" data-lab-action="stream-complete">▶ Completar stream</button>
+        <button class="btn" data-lab-action="stream-reset">↺ Reset</button>
+      </div>
+      <div class="labKpis">
+        <div class="labKpi">Input<b>${input.toLocaleString('es')} tok</b></div>
+        <div class="labKpi ${cancelled?'warn':'good'}">Output<b>${output.toLocaleString('es')} tok</b></div>
+        <div class="labKpi ${cancelled?'bad':'good'}">Costo<b>$${cost.toFixed(4)}</b></div>
+      </div>
+      <div class="labBar"><span class="in" style="width:${Math.round(input/(input+completeOut)*100)}%"></span><span class="out" style="width:${Math.round(output/(input+completeOut)*100)}%"></span><span class="waste" style="width:${cancelled?Math.round((completeOut-at)/(input+completeOut)*100):0}%"></span></div>
+      <div class="hint" style="margin-top:5px">El input y el TTFT ya se pagaron. Cancelar evita el decode restante, pero no devuelve el prefill.</div>
+    </div>
+    <div class="labCard">
+      <h4>Eventos del stream</h4>
+      <div class="labEvents">${events}</div>
+      <div class="labStatus ${cancelled?'warn':idle?'info':'ok'}" style="margin-top:9px">${idle?'Sin simular todavía. El costo mostrado es el de completar el stream.':cancelled?`Cancelado: pagás input + ${at} tokens de output. Ahorrás ~$${waste.toFixed(4)} frente a completar, pero perdés la respuesta y podés dejar un tool_use a medias.`:`Completo: pagás input + ${completeOut} tokens de output. El usuario vio la respuesta entera.`}</div>
+      <p style="margin-top:8px">El harness debe abortar el HTTP con <code>AbortController</code>, descartar deltas incompletos y no ejecutar un <code>tool_use</code> cuyo JSON no cerró.</p>
+    </div>
+  </div>
+  <div class="labStatus info" style="margin-top:10px">La cancelación es una decisión de UX y de costo. No cambia el precio del input ni del TTFT; cambia cuánto decode se factura y qué parte de la respuesta existe. Si el usuario reintenta, el input puede volver a pagarse completo.</div>`;
+}
+
 function labRunSlash(raw){
   const s = labState.slash;
   const line = String(raw || '').trim();
@@ -5142,10 +5517,21 @@ function bindLabs(){
       b.onclick = ()=>labAction(b.dataset.labAction, b.dataset);
     });
     body.querySelectorAll('[data-lab-input]').forEach(el=>{
+      const key = el.dataset.labInput;
+      if(key === 'agents'){
+        el.oninput = ()=>{ labState.agentsText = el.value; };
+        return;
+      }
+      if(key === 'tool-text'){
+        el.oninput = ()=>{ labState.toolResultText = el.value; };
+        return;
+      }
       el.onchange = ()=>{
-        const key = el.dataset.labInput;
         if(key === 'budget') labState.budget = +el.value;
         if(key === 'safe') labState.safe = !!el.checked;
+        if(key === 'tool-max') labState.toolResultMax = +el.value;
+        if(key === 'stream-at') labState.streamAt = +el.value;
+        if(key === 'stream-model') labState.streamModel = el.value;
         renderLabBody();
       };
     });
@@ -5154,6 +5540,13 @@ function bindLabs(){
         labState.tools[cb.dataset.tool] = !!cb.checked;
         labState.toolDirty = true;
         labState.toolTest = null;
+        renderLabBody();
+      };
+    });
+    body.querySelectorAll('[data-challenge]').forEach(cb=>{
+      cb.onchange = ()=>{
+        labState.challenges[cb.dataset.challenge] = !!cb.checked;
+        try{ localStorage.setItem('harness-labs-challenges', JSON.stringify(labState.challenges)); }catch(e){}
         renderLabBody();
       };
     });
@@ -5196,6 +5589,40 @@ function labAction(action, data){
     const el = $('labCmd'); labRunSlash(el ? el.value : ''); return;
   }
   if(action === 'slash-quick'){ labRunSlash(data.cmd || ''); return; }
+  if(action === 'memory-save'){ labState.memorySaved = true; renderLabBody(); return; }
+  if(action === 'memory-clear'){ labState.memorySaved = false; renderLabBody(); return; }
+  if(action === 'memory-mode'){ labState.memoryMode = data.val || 'none'; renderLabBody(); return; }
+  if(action === 'agents-reload'){
+    labState.agentsLoaded = true;
+    labState.agentsCache = 'miss';
+    labState.agentsVersion++;
+    renderLabBody(); return;
+  }
+  if(action === 'agents-remove'){
+    labState.agentsLoaded = false;
+    labState.agentsCache = 'hit';
+    renderLabBody(); return;
+  }
+  if(action === 'agents-reset'){
+    labState.agentsLoaded = true;
+    labState.agentsText = LAB_AGENTS_DEFAULT;
+    labState.agentsCache = 'hit';
+    labState.agentsVersion++;
+    renderLabBody(); return;
+  }
+  if(action === 'ext'){ labState.ext = data.ext || 'provider'; renderLabBody(); return; }
+  if(action === 'tool-preset'){
+    const preset = data.preset;
+    if(preset === 'short') labState.toolResultText = 'ok: 3 tests passed in 0.12s\nparser.py:93: eval reemplazado por json.loads';
+    else if(preset === 'error') labState.toolResultText = 'FAILED tests/test_parser.py::test_eval - AssertionError: expected dict, got list\n' + LAB_TOOL_SAMPLE;
+    else labState.toolResultText = LAB_TOOL_SAMPLE;
+    renderLabBody(); return;
+  }
+  if(action === 'tool-strategy'){ labState.toolResultStrategy = data.val || 'head+tail'; renderLabBody(); return; }
+  if(action === 'tool-process'){ renderLabBody(); return; }
+  if(action === 'stream-cancel'){ labState.streamStatus = 'cancelled'; renderLabBody(); return; }
+  if(action === 'stream-complete'){ labState.streamStatus = 'completed'; renderLabBody(); return; }
+  if(action === 'stream-reset'){ labState.streamStatus = 'idle'; renderLabBody(); return; }
 }
 
 /* =========================================================

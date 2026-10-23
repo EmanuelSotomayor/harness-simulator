@@ -21,17 +21,17 @@ El simulador no intenta reemplazar un curso de implementación. Su valor es **ve
 | §07 Compaction strategies | Escenario de compactación + Lab ② con NoCompaction / SlidingWindow / Summarize y SafeSplitPoint | **Mejorado** |
 | §08 Better input | No aplica al simulador web; sí aplica la idea de TUI | Fuera de alcance |
 | §09 Plug-and-play tools | Lab ③: registry, `Definitions()` vs `Execute()`, alta de tool y caché | **Agregado** |
-| §10 Project structure | Documento de arquitectura y puntos de extensión | Parcial |
+| §10 Project structure | Lab ⑦: Provider / Tool / Compaction / Memory / Command con interfaz y una línea de composición | **Mejorado** |
 | §11 Subagents | Escenario de subagente con context firewall | Cubierto |
 | §12 Full TUI | La TUI aparece como concepto; no se simula el estado completo | Parcial |
 | §13 What's next | Roadmap del repo | Cubierto como doc |
 | §14 MCP | Escenario MCP: JSON-RPC, namespacing y trust boundary | Cubierto |
-| §15 AGENTS.md | Aparece en el system prompt y el glosario; falta un lab de carga/recarga | Parcial |
+| §15 AGENTS.md | Lab ⑥: editar, recargar, ver el system armado y la invalidación de caché | **Agregado** |
 | §16 Token viewer | Tokens, caché, costo, latencia y resumen por llamada | Cubierto |
 | §17 Prompt caching | Breakpoint, read/write, TTL y deltas de caché | Cubierto |
 | §18 Diff approval | Lab ①: diff exacto, aprobar/denegar y `tool_result` de error | **Agregado** |
-| §19 Agent memory | “Memoria vs contexto” y segundo turno; falta memoria persistente | Parcial |
-| Ejercicios | No hay ejercicios con criterios de aceptación | Pendiente |
+| §19 Agent memory | Lab ⑤: sesión 1 guarda, sesión 2 compara `Preamble` / `Recall` / sin memoria | **Agregado** |
+| Ejercicios | Lab ⑧: 5 desafíos con criterio, pista y progreso local | **Agregado** |
 
 ## Mejoras implementadas
 
@@ -74,10 +74,51 @@ El simulador no intenta reemplazar un curso de implementación. Su valor es **ve
 
 **Concepto que fija:** el harness tiene una capa de comandos propia; no todo lo que escribe el usuario es prompt.
 
-## Próximos pasos sugeridos
+### Lab ⑤ — Memoria entre sesiones
 
-1. **Memoria entre sesiones**: `AGENTS.md` (humano) + `Preamble` (memoria del agente) + `Recall`/`Save`; mostrar qué se inyecta y qué no.
-2. **Lab de `AGENTS.md`**: editar el archivo, recargar y ver el cambio de prefijo/caché.
-3. **Mapa de puntos de extensión**: Provider / Tool / Compaction / Memory / Command con el patrón “interfaz + implementación + una línea”.
-4. **Desafíos**: 3–5 ejercicios con criterios de aceptación, sin auto-grading.
-5. **TUI state machine**: `idle → running → awaiting_approval` en el escenario de permisos.
+- Sesión 1 guarda una preferencia en `.harness/memory.md`.
+- Sesión 2 compara tres modos: sin memoria, `Preamble` (inyecta siempre) y `Recall` (tool bajo demanda).
+- Muestra el costo en tokens de cada modo y trata la memoria como dato no confiable.
+
+**Concepto que fija:** memoria no es contexto; el harness decide qué se inyecta y cuándo.
+
+### Lab ⑥ — AGENTS.md
+
+- Editor con el contenido del archivo y botones para recargar, quitar y resetear.
+- Vista del system armado: base + `AGENTS.md` + skills + memoria.
+- Al recargar, el prefijo cambia y la caché se invalida.
+
+**Concepto que fija:** `AGENTS.md` es contexto de proyecto escrito por humanos; el modelo no lo edita.
+
+### Lab ⑦ — Puntos de extensión
+
+- Provider, Tool, Compaction, Memory y Command.
+- Cada tarjeta muestra interfaz, archivo, implementación y una línea de composición.
+- Separa las costuras aditivas (tools) de las excluyentes (provider, compaction, memory).
+
+**Concepto que fija:** extender el harness es implementar una interfaz, no tocar el loop.
+
+### Lab ⑧ — Desafíos
+
+- Cinco ejercicios: agregar una tool, `SafeSplitPoint`, `AGENTS.md`, memoria y cancelación.
+- Cada uno tiene criterio de aceptación y pista; el progreso se guarda en `localStorage`.
+- No hay auto-grading: el valor está en probar y decidir.
+
+**Concepto que fija:** las ideas se entienden cuando se implementan y se comparan.
+
+### Labs ⑨ y ⑩ — Tool result real y streaming cancel
+
+- ⑨ permite pegar un output y comparar truncado `head`, `tail` y `head+tail`, con tokens antes/después.
+- ⑩ simula un stream, lo cancela a mitad y muestra eventos, costo parcial y riesgo de `tool_use` incompleto.
+
+**Concepto que fija:** truncar no es compactar; cancelar ahorra decode, no input ni TTFT.
+
+## Otras fuentes
+
+La lista completa de documentación, papers y repositorios que informaron el simulador está al final del [`README.md`](../README.md#referencias-y-fuentes-de-inspiración). BYO Harness es una de las referencias, no la única.
+
+## Pendientes
+
+1. **Página de “cómo extender”**: un ejemplo mínimo por costura, fuera del modal.
+2. **TUI state machine**: `idle → running → awaiting_approval` en el escenario de permisos.
+3. **Tests de humo dentro del repo** para escenarios, labs y mobile.
