@@ -195,3 +195,7 @@ El **glosario** del panel izquierdo tiene 58 términos con buscador.
 6. **Streaming con cancelación**: medir cuánto se factura si el usuario corta a mitad del stream.
 
 El detalle y las prioridades están en [`docs/roadmap.md`](docs/roadmap.md).
+
+## Licencia
+
+GPLv3. Ver [`LICENSE`](LICENSE).
