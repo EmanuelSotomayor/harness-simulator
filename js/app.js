@@ -4811,11 +4811,11 @@ function labAction(action, data){
 /* =========================================================
    EVENTOS
 ========================================================= */
-$('btnStart').onclick = ()=>{ startScenario($('scn').value, {scenarioStart:true}); };
+$('btnStart').onclick = ()=>{ startScenario($('scn').value); };
 const stepsRoot = $('steps');
 if(stepsRoot) stepsRoot.addEventListener('click', e=>{
   const b = e.target.closest('[data-start-scenario]');
-  if(b) startScenario($('scn').value, {scenarioStart:true});
+  if(b) startScenario($('scn').value);
 });
 $('btnStep').onclick  = ()=>{
   if(!steps.length){ $('steps').innerHTML='<div class="empty">Primero presioná <b>Iniciar simulación</b>.</div>'; return; }
