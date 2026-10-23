@@ -1,6 +1,13 @@
 # Simulador del Harness — guía didáctica
 
-Archivo único: [`index.html`](index.html). No necesita build, dependencias ni servidor.
+El proyecto está separado en archivos estáticos, sin build ni dependencias:
+
+| Archivo | Rol |
+|---|---|
+| [`index.html`](index.html) | estructura y contenido de la página |
+| [`css/styles.css`](css/styles.css) | estilos, layout y responsive |
+| [`js/app.js`](js/app.js) | lógica de escenarios, loop, labs, sandbox y exportación |
+| [`favicon.svg`](favicon.svg) | ícono del sitio |
 
 Abrí `index.html` directamente en el navegador, o servilo localmente:
 

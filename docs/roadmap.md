@@ -39,7 +39,7 @@
 
 ## Reglas de diseño
 
-- Un solo archivo HTML, sin build ni dependencias para el deploy.
+- HTML, CSS y JS en archivos separados (`index.html`, `css/styles.css`, `js/app.js`), sin build ni dependencias para el deploy.
 - No agregar datos personales a ejemplos: usar `<sistema>`, `<raíz-del-proyecto>`, `<rama>`.
 - Cada lab debe tener: contrato, estado visible, acción y resultado.
 - No duplicar la corrida: los labs son simulaciones independientes.
