@@ -1,0 +1,12 @@
+# Dependencias y artefactos locales
+node_modules/
+.netlify/
+.DS_Store
+
+# Tests locales
+/tests/.cache/
+
+# Editores
+.vscode/
+.idea/
+*.swp
