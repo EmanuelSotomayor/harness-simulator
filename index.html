@@ -4844,7 +4844,7 @@ function labsShell(){
     ['registry','③ Tool registry'],
     ['slash','④ Slash commands']
   ].map(([id,label])=>`<button class="labTab ${labTab===id?'on':''}" data-lab="${id}">${label}</button>`).join('');
-  return `<div class="labIntro">Cuatro laboratorios extraídos de <b>Build Your Own Coding Agent</b> (BYO Harness). No modifican la corrida: son simulaciones chicas para ver una decisión del harness de cerca. Cada pestaña muestra el contrato, el estado y el resultado.</div>
+  return `<div class="labIntro">Cuatro laboratorios extraídos de <a href="https://www.byoharness.dev/es/#curriculum" target="_blank" rel="noopener"><b>Build Your Own Coding Agent</b></a> (BYO Harness, MIT). No modifican la corrida: son simulaciones chicas para ver una decisión del harness de cerca. Cada pestaña muestra el contrato, el estado y el resultado.</div>
     <div class="labsTabs" id="labsTabs">${tabs}</div>
     <div id="labBody">${labsBody()}</div>`;
 }
