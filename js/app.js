@@ -3179,9 +3179,10 @@ function next(){ if(idx>=steps.length){ stopAuto(); showSummary(); return; } rev
 function stopAuto(){ if(autoTimer){ clearInterval(autoTimer); autoTimer=null; $('btnAuto').textContent='⏩ Auto'; } }
 function reset(){
   stopAuto();
-  steps=[]; blocks=[]; idx=0; calls=0; N=0; tally={rows:[]}; revealed=0; drops=[]; cacheState={sig:[],count:0,expires:0}; latencyExtra=0;
+  steps=[]; blocks=[]; idx=0; calls=0; N=0; tally={rows:[]}; revealed=0; drops=[]; cacheState={sig:[],count:0,expires:0}; latencyExtra=0; scenarioStartIdx=0;
   $('steps').innerHTML = '<div class="empty">Elegí una parada de la <b>Ruta de aprendizaje</b> (un clic arranca) o un escenario.<br><br><button class="btn primary" data-start-scenario>▶ Empezar con el escenario seleccionado</button></div>';
   const sum=$('summary'); if(sum) sum.innerHTML='';
+  const step=$('stStep'); if(step) step.textContent='—';
   readCfg();
   renderCtx(); renderDiscards(); refreshStats(); updateNav(); renderRoute();
   const hint=$('agentHint'); if(hint) hint.innerHTML = cfg.agent==='build'
@@ -4812,6 +4813,7 @@ function labAction(action, data){
    EVENTOS
 ========================================================= */
 $('btnStart').onclick = ()=>{ startScenario($('scn').value); };
+$('btnReset').onclick = ()=> reset();
 const stepsRoot = $('steps');
 if(stepsRoot) stepsRoot.addEventListener('click', e=>{
   const b = e.target.closest('[data-start-scenario]');
