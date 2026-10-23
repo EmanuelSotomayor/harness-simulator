@@ -1,4 +1,4 @@
-# Simulador del Harness — guía didáctica
+# Simulador del Harness
 
 El proyecto está separado en archivos estáticos, sin build ni dependencias:
 
@@ -14,10 +14,6 @@ Abrí `index.html` directamente en el navegador, o servilo localmente:
 ```bash
 python3 -m http.server 8080   # http://localhost:8080/
 ```
-
-Para deployar, subí el contenido del repo a GitHub Pages, Netlify o Cloudflare Pages. El entrypoint es `index.html`; no hay paso de build.
-
-Este simulador se inspira en varias fuentes: el currículum de [BYO Harness](https://www.byoharness.dev/es/#curriculum) (MIT), documentación de proveedores, papers sobre contexto y agentes, y repositorios como OpenCode, Claude Code y Aider. BYO Harness es una de las referencias, no la única. El mapa de qué se tomó de ese curso está en [`docs/byo-harness-map.md`](docs/byo-harness-map.md); las referencias completas están al final.
 
 ## Qué muestra
 
