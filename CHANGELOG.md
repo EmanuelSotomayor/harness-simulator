@@ -22,6 +22,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). El
   - la tarjeta de entrada de cada escenario trae links “Para profundizar” al paso de ①, al contrato de ② y al lab relacionado.
 - **README**: link al sitio en vivo y sección de deploy.
 - Este `CHANGELOG.md`.
+- Hosting en GitHub Pages con dominio propio `harness-simulator.dev` (archivos `CNAME` y `.nojekyll`).
 
 ### Cambiado
 
@@ -34,6 +35,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). El
 - El teclado (`←` `→`, Espacio, Home/End) actúa sobre la pestaña activa.
 - Los términos en inglés ya no se subrayan dentro de botones ni links.
 - El README sigue el orden de los tres hilos.
+- El sitio se publica en GitHub Pages en lugar de Netlify; el README documenta el DNS y el deploy.
 - El recorrido presenta el paso del assistant como contenido, sin marcas de “faltaba” ni comparación con el diagrama original.
 
 ### Corregido

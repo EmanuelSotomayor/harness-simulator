@@ -1,6 +1,6 @@
 # Simulador del Harness
 
-**En vivo:** <https://harness-simulator.netlify.app>
+**En vivo:** <https://harness-simulator.dev>
 
 El proyecto está separado en archivos estáticos, sin build ni dependencias:
 
@@ -12,6 +12,8 @@ El proyecto está separado en archivos estáticos, sin build ni dependencias:
 | [`js/loop-walkthrough.js`](js/loop-walkthrough.js) | recorrido ① “El loop, request por request” (se carga después de `app.js`) |
 | [`favicon.svg`](favicon.svg) | ícono del sitio |
 | [`CHANGELOG.md`](CHANGELOG.md) | historial de cambios |
+| [`CNAME`](CNAME) | dominio propio de GitHub Pages |
+| `.nojekyll` | Pages sirve los archivos tal cual, sin pasar por Jekyll |
 
 Abrí `index.html` directamente en el navegador, o servilo localmente:
 
@@ -21,13 +23,19 @@ python3 -m http.server 8080   # http://localhost:8080/
 
 ### Deploy
 
-El sitio está en Netlify, conectado a este repositorio: cada push a `main` publica la raíz del repo tal cual (ver [`netlify.toml`](netlify.toml), `publish = "."`, sin paso de build). Para publicar sin pasar por git, con la CLI de Netlify autenticada y el directorio vinculado al proyecto:
+El sitio se publica con **GitHub Pages** desde la raíz de `main` (Settings → Pages → *Deploy from a branch*, `main` / `(root)`), sin paso de build: cada push a `main` lo actualiza en uno o dos minutos.
 
-```bash
-netlify deploy --prod --dir .
-```
+El dominio `harness-simulator.dev` se define en el archivo [`CNAME`](CNAME) y su DNS está en name.com:
 
-Un deploy manual queda pisado por el próximo push a `main`: subí también el commit para que el repo y el sitio no diverjan.
+| Tipo | Host | Valor |
+|---|---|---|
+| `A` | `@` | `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` |
+| `AAAA` | `@` | `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153` |
+| `CNAME` | `www` | `emanuelsotomayor.github.io` |
+
+`.dev` exige HTTPS en todos los navegadores: el sitio responde recién cuando GitHub emite el certificado. Después activá **Enforce HTTPS** en Settings → Pages.
+
+[`netlify.toml`](netlify.toml) queda del hosting anterior en Netlify; no afecta a Pages.
 
 ## Qué muestra
 
