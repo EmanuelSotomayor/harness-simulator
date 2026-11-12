@@ -466,10 +466,6 @@
   .wtNode:hover{border-color:var(--accent);}
   .wtNode.on{border-color:var(--accent); background:rgba(88,166,255,.16); box-shadow:0 0 0 2px rgba(88,166,255,.25);}
   .wtNode.on b{color:var(--accent);}
-  .wtNode.added{border-color:rgba(210,153,34,.6);}
-  .wtNode.added.on{border-color:var(--yellow); background:rgba(210,153,34,.14); box-shadow:0 0 0 2px rgba(210,153,34,.25);}
-  .wtNode.added.on b{color:var(--yellow);}
-  .wtNew{position:absolute; top:-7px; right:6px; font-size:8.5px; background:var(--yellow); color:#0d1117; border-radius:4px; padding:0 4px; font-weight:700; text-transform:uppercase; letter-spacing:.04em;}
   .wtNode.decision{border-style:dashed;}
   .wtNode.exit{border-color:rgba(63,185,80,.45);}
   .wtNode.exit.on{border-color:var(--green); background:rgba(63,185,80,.12); box-shadow:0 0 0 2px rgba(63,185,80,.2);}

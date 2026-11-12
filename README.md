@@ -11,6 +11,7 @@ El proyecto está separado en archivos estáticos, sin build ni dependencias:
 | [`js/app.js`](js/app.js) | lógica de escenarios, loop de 5 etapas, Pydantic, labs, sandbox y exportación |
 | [`js/loop-walkthrough.js`](js/loop-walkthrough.js) | recorrido ① “El loop, request por request” (se carga después de `app.js`) |
 | [`favicon.svg`](favicon.svg) | ícono del sitio |
+| [`CHANGELOG.md`](CHANGELOG.md) | historial de cambios |
 
 Abrí `index.html` directamente en el navegador, o servilo localmente:
 
@@ -73,11 +74,11 @@ El recorrido responde las preguntas típicas sobre el flujo:
 |---|---|
 | ¿El mensaje del usuario se agrega a `messages`? | Sí: `messages.append({"role":"user","content":…})`. Es una lista del harness, no del modelo. En Anthropic el `system` y las `tools` no van en `messages`; en OpenAI el `system` sí. |
 | ¿Cómo se fija si hay `tool_use` / function calling? | Lee `stop_reason == "tool_use"` (Anthropic) o `finish_reason == "tool_calls"` (OpenAI). |
-| ¿La respuesta del modelo también va a `messages`? | Sí, y **antes** de ejecutar las tools. Es el paso que suele faltar en los diagramas: sin él, el `tool_result` queda huérfano y la API rechaza el request. |
+| ¿La respuesta del modelo también va a `messages`? | Sí, y **antes** de ejecutar las tools: el `tool_result` que viene después la referencia por id; sin ella en el historial, la API rechaza el request. |
 | ¿El resultado “se agrega a tool_result”? | Se **envuelve** en un bloque `tool_result` con el mismo `tool_use_id`, y ese bloque va en un mensaje nuevo `role:"user"` que se agrega a `messages` (OpenAI: un mensaje `role:"tool"` por llamada). |
 | ¿Qué pasa si los argumentos no cumplen el schema? | `ValidationError` → `tool_result` con `is_error: true` → el modelo corrige en la siguiente vuelta (variante “argumentos inválidos”). |
 
-El diagrama corregido:
+El diagrama del recorrido:
 
 ```text
 [tu entrada]
@@ -89,7 +90,7 @@ El diagrama corregido:
 [llamar al modelo] ◀────────────────────┐  system + tools + TODO messages
     │                                   │
     ▼                                   │
-[agregar la respuesta]  ← faltaba       │  role:"assistant" (texto + tool_use)
+[agregar la respuesta]                  │  role:"assistant" (texto + tool_use)
     │                                   │
     ▼                                   │
 [¿hay tool_use?] ──no──▶ [imprimir texto, volver al REPL]
@@ -103,7 +104,7 @@ El diagrama corregido:
 [agregar tool_results] ─────────────────┘  role:"user" con bloques tool_result
 ```
 
-El desplegable **“Mismo loop, distintos nombres”** muestra el diagrama original y el corregido lado a lado, una tabla de equivalencias entre las vistas del simulador (nodo del diagrama ↔ línea de código ↔ 5 etapas ↔ ReAct ↔ micro-pasos del escenario 3 ↔ contrato) y el mismo loop en pseudocódigo. Teclado: `←` `→`, Espacio, Home/End.
+El desplegable **“Mismo loop, distintos nombres”** muestra el diagrama completo, una tabla de equivalencias entre las vistas del simulador (nodo del diagrama ↔ línea de código ↔ 5 etapas ↔ ReAct ↔ micro-pasos del escenario 3 ↔ contrato) y el mismo loop en pseudocódigo. Teclado: `←` `→`, Espacio, Home/End.
 
 ## Vista conceptual: el loop en 5 etapas
 

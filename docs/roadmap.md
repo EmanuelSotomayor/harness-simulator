@@ -42,6 +42,7 @@
 ## Reglas de diseño
 
 - HTML, CSS y JS en archivos separados (`index.html`, `css/styles.css`, `js/app.js`, `js/loop-walkthrough.js`), sin build ni dependencias para el deploy.
+- La app no muestra avisos de cambios (“nuevo”, “faltaba”, “corregido”): presenta el contenido tal cual es. Lo que se agrega, cambia o corrige se registra en `CHANGELOG.md`.
 - Todo contenido nuevo se engancha a un hilo: indicar en qué paso de ① ocurre, qué contrato de ② lo valida o qué escenario de ③ lo muestra.
 - No agregar datos personales a ejemplos: usar `<sistema>`, `<raíz-del-proyecto>`, `<rama>`.
 - Cada lab debe tener: contrato, estado visible, acción y resultado.

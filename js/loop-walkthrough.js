@@ -16,12 +16,12 @@ const WT_READ_SCHEMA = {
 };
 const WT_STAGE_NAMES = ['Perceive','Reason','Plan','Act','Observe'];
 
-/* Nodos del diagrama. "asst" es el paso que suele faltar en el diagrama clásico. */
+/* Nodos del diagrama */
 const WT_NODES = {
   input:   {label:'tu entrada', sub:'input("> ")'},
   user:    {label:'agregar a messages', sub:'role: "user"'},
   call:    {label:'llamar al modelo', sub:'request → response'},
-  asst:    {label:'agregar la respuesta', sub:'role: "assistant"', added:true},
+  asst:    {label:'agregar la respuesta', sub:'role: "assistant"'},
   check:   {label:'¿hay tool_use?', sub:'stop_reason'},
   exec:    {label:'validar y ejecutar cada herramienta', sub:'Pydantic → permisos → tool'},
   results: {label:'agregar tool_results', sub:'role: "user" · role: "tool"'},
@@ -313,8 +313,8 @@ function wtBuild(invalid){
     msgs.push({role:'assistant', blocks:response.blocks});
     step({node:'asst', stage:3, contract:'asst', code:['appendAsst'], added:[msgs.length-1],
       title:'Se agrega la respuesta del assistant a messages',
-      q: k===1 ? '¿Y la respuesta del modelo? En el diagrama clásico no aparece.' : null,
-      a: k===1 ? 'Es el paso que falta. La respuesta completa (texto <b>y</b> <code>tool_use</code>) se agrega a messages <b>antes</b> de ejecutar las tools. El <code>tool_result</code> que viene después referencia ese <code>tool_use</code> por id; si no está en el historial, el próximo request es inválido (400).' : null,
+      q: k===1 ? '¿La respuesta del modelo también va a messages?' : null,
+      a: k===1 ? 'Sí. La respuesta completa (texto <b>y</b> <code>tool_use</code>) se agrega a messages <b>antes</b> de ejecutar las tools. El <code>tool_result</code> que viene después referencia ese <code>tool_use</code> por id; si no está en el historial, el próximo request es inválido (400).' : null,
       desc: response.stop==='tool_use'
         ? 'El historial es append-only: primero entra lo que el modelo pidió, después entra lo que pasó. Así el próximo request cuenta la historia en orden.'
         : 'También la respuesta final entra a messages: si el usuario escribe otra cosa, el modelo tiene que ver lo que ya contestó.'});
@@ -461,8 +461,8 @@ function wtRenderFlow(st){
   const box = $('wtFlow'); if(!box) return;
   const node = id => {
     const n = WT_NODES[id];
-    const cls = ['wtNode', id===st.node?'on':'', n.added?'added':'', id==='check'?'decision':'', id==='print'?'exit':''].filter(Boolean).join(' ');
-    return `<button type="button" class="${cls}" data-wt-node="${id}">${n.added?'<span class="wtNew">faltaba</span>':''}<b>${n.label}</b><small>${esc(n.sub)}</small></button>`;
+    const cls = ['wtNode', id===st.node?'on':'', id==='check'?'decision':'', id==='print'?'exit':''].filter(Boolean).join(' ');
+    return `<button type="button" class="${cls}" data-wt-node="${id}"><b>${n.label}</b><small>${esc(n.sub)}</small></button>`;
   };
   const arrow = (t,on) => `<div class="wtArrow${on?' on':''}">▼${t?' <span>'+t+'</span>':''}</div>`;
   box.innerHTML = `<div class="wtRepl"><span class="wtBoxLabel">REPL · turno ${st.turn2?2:1}</span>

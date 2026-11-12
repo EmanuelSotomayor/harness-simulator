@@ -232,7 +232,7 @@
       </h2>
       <div class="body">
         <div class="wtIntro">Seguí <b>un solo mensaje</b> desde que lo escribís hasta que vuelve la respuesta. En cada paso ves qué se agrega a <code>messages</code>, qué viaja en el request, qué vuelve en el response, qué <b>contrato de Pydantic</b> valida esa frontera y qué línea de <code>agent.py</code> se está ejecutando. Tocá un nodo del diagrama para saltar a ese momento.</div>
-        <div class="wtCallout">⚠️ <b>Al diagrama clásico le falta un paso:</b> después de llamar al modelo hay que <b>agregar la respuesta del assistant</b> a <code>messages</code>, antes de ejecutar las tools. Si no, el <code>tool_result</code> queda huérfano y la API rechaza el request. <button type="button" class="btn" id="wtJumpAsst">Ver ese paso</button></div>
+        <div class="wtCallout">🔑 <b>Un paso clave:</b> después de llamar al modelo, la <b>respuesta del assistant</b> se agrega a <code>messages</code> antes de ejecutar las tools. El <code>tool_result</code> que viene después la referencia por id: sin ella en el historial, la API rechaza el request. <button type="button" class="btn" id="wtJumpAsst">Ver ese paso</button></div>
         <div class="wtGrid">
           <div class="wtFlowCol">
             <div class="wtFlow" id="wtFlow"></div>
@@ -271,34 +271,10 @@
           </div>
         </div>
         <details class="wtMap">
-          <summary>🗺 Mismo loop, distintos nombres — el diagrama corregido y sus equivalencias</summary>
+          <summary>🗺 Mismo loop, distintos nombres — el diagrama completo y sus equivalencias</summary>
           <div class="wtMapGrid">
             <div>
-              <div class="plabel">diagrama clásico</div>
-<pre>[tu entrada]
-    │
-    ▼
-[agregar a messages]
-    │
-    ▼
-[llamar al modelo] ─────┐
-    │                   │
-    ▼                   │
-[¿hay tool_use?] ──no───┴──▶ [imprimir texto, volver al REPL]
-    │
-   sí
-    │
-    ▼
-[ejecutar cada herramienta]
-    │
-    ▼
-[agregar tool_results]
-    │
-    ▼
-(volver a "llamar al modelo")</pre>
-            </div>
-            <div>
-              <div class="plabel">diagrama corregido</div>
+              <div class="plabel">el diagrama completo</div>
 <pre>[tu entrada]
     │
     ▼
@@ -308,7 +284,7 @@
 [llamar al modelo] ◀────────────────────┐  system + tools + TODO messages
     │                                   │
     ▼                                   │
-[agregar la respuesta]  ← faltaba       │  role:"assistant" (texto + tool_use)
+[agregar la respuesta]                  │  role:"assistant" (texto + tool_use)
     │                                   │
     ▼                                   │
 [¿hay tool_use?] ──no──▶ [imprimir texto, volver al REPL]
