@@ -2,9 +2,11 @@
 
 ## Estado actual
 
-- 13 escenarios interactivos.
+- Tres hilos conductores enlazados entre sí: ① el loop request por request, ② contratos con Pydantic, ③ escenarios.
+- Recorrido de `messages[]` paso a paso con request/response, contrato y línea de código, en Anthropic y OpenAI, con variante de argumentos inválidos.
+- 13 escenarios interactivos, con links “Para profundizar” a ①, ② y los labs.
 - Loop de 5 etapas con request/response y toggle Anthropic / OpenAI.
-- Taller de Pydantic y contratos.
+- Taller de Pydantic y contratos, ordenado como el loop.
 - Sandbox de payload, comparador A/B, exportación y glosario.
 - Diez labs de harness: diff approval, compactación, tool registry, slash commands, memoria, AGENTS.md, puntos de extensión, desafíos, tool result real y streaming con cancelación.
 
@@ -39,7 +41,8 @@
 
 ## Reglas de diseño
 
-- HTML, CSS y JS en archivos separados (`index.html`, `css/styles.css`, `js/app.js`), sin build ni dependencias para el deploy.
+- HTML, CSS y JS en archivos separados (`index.html`, `css/styles.css`, `js/app.js`, `js/loop-walkthrough.js`), sin build ni dependencias para el deploy.
+- Todo contenido nuevo se engancha a un hilo: indicar en qué paso de ① ocurre, qué contrato de ② lo valida o qué escenario de ③ lo muestra.
 - No agregar datos personales a ejemplos: usar `<sistema>`, `<raíz-del-proyecto>`, `<rama>`.
 - Cada lab debe tener: contrato, estado visible, acción y resultado.
 - No duplicar la corrida: los labs son simulaciones independientes.

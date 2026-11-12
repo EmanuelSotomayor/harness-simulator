@@ -12,7 +12,7 @@ El simulador no intenta reemplazar un curso de implementación. Su valor es **ve
 | BYO Harness | Qué hay en el simulador | Estado |
 |---|---|---|
 | §00 ¿Qué es harness engineering? | Idea central: el modelo propone, el harness decide y ejecuta | Cubierto |
-| §01 El agent loop | Loop de 5 etapas + 12 micro-pasos + ReAct | Cubierto |
+| §01 El agent loop | Recorrido ① de `messages[]` request por request + loop de 5 etapas + 12 micro-pasos + ReAct, con tabla de equivalencias | **Mejorado** |
 | §02 Permission gate | allow / ask / hitl / deny; el permiso vive en código | Cubierto |
 | §03 Provider interface | Toggle Anthropic / OpenAI / Responses; formas de `tool_use` y `function calling` | Cubierto |
 | §04 UI polish | Traza, tarjetas, badges, progreso, responsive | Cubierto |

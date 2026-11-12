@@ -31,20 +31,34 @@ const est = s => Math.ceil(s.length/4); // estimación ~4 chars/token
 /* =========================================================
    RUTA DE APRENDIZAJE (orden pedagógico + progreso)
 ======================================================== */
+/* rel: dónde se conecta cada escenario con ① (nodo del loop), ② (contrato) y los labs */
 const ROUTE = [
-  {scn:'simple',    t:'Anatomía de una llamada',   b:'system, roles, tools y max_tokens: qué viaja en el request.'},
-  {scn:'edit',      t:'Una vuelta completa',       b:'tool_use → permiso → ejecución → tool_result → respuesta.'},
-  {scn:'loop',      t:'Los 12 micro-pasos',        b:'ReAct al detalle: Thought, Action y Observation, paso por paso.'},
-  {scn:'tooluse',   t:'Function calling y schemas',b:'Quién declara, quién valida, strict y JSON mode.'},
-  {scn:'parallel',  t:'Parallel tool calling',     b:'Latencia, dependencias y por qué el orden de los ids importa.'},
-  {scn:'streaming', t:'Streaming SSE',             b:'TTFT, deltas, tool args en pedazos y usage parcial.'},
-  {scn:'errores',   t:'Errores y reintentos',      b:'Transporte vs acción: qué ve el modelo y qué no.'},
-  {scn:'overflow',  t:'Contexto y compactación',   b:'Ventana, truncado, resumen y caché invalidada.'},
-  {scn:'sub',       t:'Subagentes',                b:'Sesión hija con contexto fresco: el context firewall.'},
-  {scn:'guard',     t:'Cuando el loop no converge',b:'max_iterations, señales de estancamiento y costo.'},
-  {scn:'mcp',       t:'MCP: tools externas',       b:'JSON-RPC, descubrimiento, namespacing y confianza.'},
-  {scn:'injection', t:'Prompt injection',          b:'El tool result es dato no confiable; el permiso es la defensa.'},
-  {scn:'multiturn', t:'Segundo turno',             b:'Qué se reenvía, qué se cachea y qué significa "memoria".'}
+  {scn:'simple',    t:'Anatomía de una llamada',   b:'system, roles, tools y max_tokens: qué viaja en el request.',
+   rel:{wt:['call','qué viaja en el request'], pyd:'stop_reason', lab:'agents'}},
+  {scn:'edit',      t:'Una vuelta completa',       b:'tool_use → permiso → ejecución → tool_result → respuesta.',
+   rel:{wt:['exec','validar y ejecutar la tool'], pyd:'tool_use', lab:'diff'}},
+  {scn:'loop',      t:'Los 12 micro-pasos',        b:'ReAct al detalle: Thought, Action y Observation, paso por paso.',
+   rel:{wt:['asst','el append del assistant'], pyd:'stop_reason', lab:'extensions'}},
+  {scn:'tooluse',   t:'Function calling y schemas',b:'Quién declara, quién valida, strict y JSON mode.',
+   rel:{wt:['exec','args inválidos → ValidationError'], wtInvalid:true, pyd:'parameters', lab:'registry'}},
+  {scn:'parallel',  t:'Parallel tool calling',     b:'Latencia, dependencias y por qué el orden de los ids importa.',
+   rel:{wt:['exec','ejecutar cada herramienta'], pyd:'parallel'}},
+  {scn:'streaming', t:'Streaming SSE',             b:'TTFT, deltas, tool args en pedazos y usage parcial.',
+   rel:{wt:['call','la response que llega en pedazos'], pyd:'parameters', lab:'cancel'}},
+  {scn:'errores',   t:'Errores y reintentos',      b:'Transporte vs acción: qué ve el modelo y qué no.',
+   rel:{wt:['exec','error → tool_result is_error'], wtInvalid:true, pyd:'tool_result', lab:'toolresult'}},
+  {scn:'overflow',  t:'Contexto y compactación',   b:'Ventana, truncado, resumen y caché invalidada.',
+   rel:{wt:['results','messages crece en cada vuelta'], lab:'compact'}},
+  {scn:'sub',       t:'Subagentes',                b:'Sesión hija con contexto fresco: el context firewall.',
+   rel:{wt:['exec','un subagente es una tool más'], pyd:'tool_result'}},
+  {scn:'guard',     t:'Cuando el loop no converge',b:'max_iterations, señales de estancamiento y costo.',
+   rel:{wt:['results','la vuelta a «llamar al modelo»'], pyd:'stop_reason'}},
+  {scn:'mcp',       t:'MCP: tools externas',       b:'JSON-RPC, descubrimiento, namespacing y confianza.',
+   rel:{wt:['exec','ejecutar la tool (local o MCP)'], pyd:'tool_use', lab:'registry'}},
+  {scn:'injection', t:'Prompt injection',          b:'El tool result es dato no confiable; el permiso es la defensa.',
+   rel:{wt:['results','el tool_result entra al historial'], pyd:'tool_result', lab:'diff'}},
+  {scn:'multiturn', t:'Segundo turno',             b:'Qué se reenvía, qué se cachea y qué significa "memoria".',
+   rel:{wt:['turn2','la segunda entrada del REPL'], lab:'memory'}}
 ];
 const doneSet = new Set();
 try{ (JSON.parse(localStorage.getItem('harness-sim-done')||'[]')||[]).forEach(x=>doneSet.add(x)); }catch(e){}
@@ -223,6 +237,69 @@ let loopFmt = 'anthropic';
 ========================================================= */
 const PYD_TABS = [
   {
+    key:'parameters',
+    label:'arguments / parameters',
+    kicker:'schema vs payload',
+    file:'tools/edit.py',
+    explain:`<h3>Schema declarado vs datos emitidos</h3>
+      <p><code>parameters</code> (OpenAI) o <code>input_schema</code> (Anthropic) es el schema que declarás en el request. <code>arguments</code> (OpenAI) o <code>input</code> (Anthropic) son los datos de una llamada concreta.</p>
+      <ul><li><b>parameters</b>: JSON Schema; se genera con <code>Model.model_json_schema()</code>.</li><li><b>arguments</b>: string JSON en OpenAI; hay que parsearlo y validarlo.</li><li><b>input</b>: objeto en Anthropic; se valida directo.</li></ul>
+      <p>El schema no impide que el modelo invente valores: solo describe la forma esperada. La validación con Pydantic es la barrera antes del efecto.</p>`,
+    code:`from pydantic import BaseModel, Field
+
+class EditArgs(BaseModel):
+    path: str
+    old_string: str = Field(min_length=1)
+    new_string: str
+    replace_all: bool = False
+
+# 1) parameters / input_schema
+parameters = EditArgs.model_json_schema()
+
+# 2) arguments (OpenAI): string JSON
+raw_arguments = '{"path":"parser.py","old_string":"eval(...)","new_string":"..."}'
+args = EditArgs.model_validate_json(raw_arguments)
+
+# 3) input (Anthropic): objeto
+args2 = EditArgs.model_validate({
+    "path": "parser.py",
+    "old_string": "eval(...)",
+    "new_string": "...",
+})`,
+    foot:`En OpenAI, <code>arguments</code> puede venir incompleto si el stream se corta o si <code>finish_reason</code> es <code>length</code>. Parseá y validá antes de ejecutar.`
+  },
+  {
+    key:'tool_choice',
+    label:'tool_choice',
+    kicker:'request · política de emisión',
+    file:'client/request.py',
+    explain:`<h3>Política de emisión, no schema</h3>
+      <p><code>tool_choice</code> controla si el modelo puede, debe o no puede emitir una tool. No cambia el schema ni borra las tools del payload: cambia la política de la llamada.</p>
+      <ul><li><code>auto</code>: el modelo elige texto o tool.</li><li><code>any</code>/<code>required</code>: al menos una tool.</li><li><code>{type:"tool", name:"read"}</code>: tool forzada.</li><li><code>none</code>: tools declaradas, pero prohibidas en este turno.</li></ul>
+      <p>Con Pydantic podés modelar la política como una unión discriminada y evitar combinaciones inválidas, como forzar una tool sin nombre.</p>`,
+    code:`from typing import Literal
+from pydantic import BaseModel
+
+class AutoChoice(BaseModel):
+    type: Literal["auto"] = "auto"
+
+class ForcedTool(BaseModel):
+    type: Literal["tool"] = "tool"
+    name: str
+
+ToolChoice = AutoChoice | ForcedTool
+
+choice = ForcedTool(name="read")
+payload = {
+    "model": "claude-sonnet-4-5",
+    "tools": tools,
+    "tool_choice": choice.model_dump(),
+}
+# {"type": "tool", "name": "read"}`,
+    foot:`<b>OpenAI:</b> <code>"auto"</code>, <code>"required"</code>, <code>"none"</code> o <code>{"type":"function","function":{"name":"read"}}</code>. Forzar una tool no valida el contenido: solo obliga a emitirla.`
+  },
+  {
+    key:'tool_use',
     label:'tool_use / function calling',
     kicker:'Reason → Act · propuesta',
     file:'tools/read.py',
@@ -268,6 +345,41 @@ args_openai = ReadArgs.model_validate_json(raw_arguments)`,
     foot:`<b>OpenAI:</b> <code>ReadArgs.model_validate_json(tool_call.function.arguments)</code>. El resto del loop es idéntico: validar, ejecutar y devolver el resultado con el mismo id.`
   },
   {
+    key:'stop_reason',
+    label:'stop_reason',
+    kicker:'Reason → decisión del loop',
+    file:'loop/stop.py',
+    explain:`<h3>La señal que decide si el loop sigue o termina</h3>
+      <p><code>stop_reason</code> (Anthropic) o <code>finish_reason</code> (OpenAI) explica por qué terminó la generación. El harness no adivina: lo lee y decide.</p>
+      <ul><li><code>tool_use</code>/<code>tool_calls</code> → hay acciones pendientes: ejecutar y volver al loop.</li><li><code>end_turn</code>/<code>stop</code> → respuesta final: salir.</li><li><code>max_tokens</code>/<code>length</code> → salida truncada: no ejecutes argumentos a medias.</li><li><code>stop_sequence</code>/<code>content_filter</code> → cortes por formato o política.</li></ul>
+      <div class="pydWarn"><b>max_tokens/length</b> puede dejar un <code>tool_use</code> con JSON incompleto. Validá el JSON completo antes de ejecutar cualquier acción.</div>`,
+    code:`from enum import Enum
+from pydantic import BaseModel
+
+class StopReason(str, Enum):
+    END_TURN = "end_turn"
+    TOOL_USE = "tool_use"
+    MAX_TOKENS = "max_tokens"
+    STOP_SEQUENCE = "stop_sequence"
+
+class Response(BaseModel):
+    stop_reason: StopReason
+    content: list[dict]
+
+resp = Response.model_validate(api_response)  # api_response: dict del proveedor
+
+def handle(resp: Response):
+    match resp.stop_reason:
+        case StopReason.TOOL_USE:
+            run_pending_tools(resp.content)
+        case StopReason.MAX_TOKENS:
+            raise RuntimeError("salida truncada: no ejecutes tools incompletas")
+        case _:
+            return final_text(resp.content)`,
+    foot:`<b>OpenAI:</b> <code>finish_reason</code> usa <code>tool_calls</code>, <code>stop</code> y <code>length</code>. El nombre cambia; la decisión del harness es la misma.`
+  },
+  {
+    key:'tool_result',
     label:'tool_result',
     kicker:'Act → Observe · Observation',
     file:'tools/result.py',
@@ -304,68 +416,7 @@ openai_message = {
     foot:`Si la tool falla: <code>ToolResult(..., is_error=True)</code>. El modelo ve el error y decide si reintenta, cambia de plan o pide ayuda.`
   },
   {
-    label:'stop_reason',
-    kicker:'Reason → decisión del loop',
-    file:'loop/stop.py',
-    explain:`<h3>La señal que decide si el loop sigue o termina</h3>
-      <p><code>stop_reason</code> (Anthropic) o <code>finish_reason</code> (OpenAI) explica por qué terminó la generación. El harness no adivina: lo lee y decide.</p>
-      <ul><li><code>tool_use</code>/<code>tool_calls</code> → hay acciones pendientes: ejecutar y volver al loop.</li><li><code>end_turn</code>/<code>stop</code> → respuesta final: salir.</li><li><code>max_tokens</code>/<code>length</code> → salida truncada: no ejecutes argumentos a medias.</li><li><code>stop_sequence</code>/<code>content_filter</code> → cortes por formato o política.</li></ul>
-      <div class="pydWarn"><b>max_tokens/length</b> puede dejar un <code>tool_use</code> con JSON incompleto. Validá el JSON completo antes de ejecutar cualquier acción.</div>`,
-    code:`from enum import Enum
-from pydantic import BaseModel
-
-class StopReason(str, Enum):
-    END_TURN = "end_turn"
-    TOOL_USE = "tool_use"
-    MAX_TOKENS = "max_tokens"
-    STOP_SEQUENCE = "stop_sequence"
-
-class Response(BaseModel):
-    stop_reason: StopReason
-    content: list[dict]
-
-resp = Response.model_validate(api_response)  # api_response: dict del proveedor
-
-def handle(resp: Response):
-    match resp.stop_reason:
-        case StopReason.TOOL_USE:
-            run_pending_tools(resp.content)
-        case StopReason.MAX_TOKENS:
-            raise RuntimeError("salida truncada: no ejecutes tools incompletas")
-        case _:
-            return final_text(resp.content)`,
-    foot:`<b>OpenAI:</b> <code>finish_reason</code> usa <code>tool_calls</code>, <code>stop</code> y <code>length</code>. El nombre cambia; la decisión del harness es la misma.`
-  },
-  {
-    label:'tool_choice',
-    kicker:'request · política de emisión',
-    file:'client/request.py',
-    explain:`<h3>Política de emisión, no schema</h3>
-      <p><code>tool_choice</code> controla si el modelo puede, debe o no puede emitir una tool. No cambia el schema ni borra las tools del payload: cambia la política de la llamada.</p>
-      <ul><li><code>auto</code>: el modelo elige texto o tool.</li><li><code>any</code>/<code>required</code>: al menos una tool.</li><li><code>{type:"tool", name:"read"}</code>: tool forzada.</li><li><code>none</code>: tools declaradas, pero prohibidas en este turno.</li></ul>
-      <p>Con Pydantic podés modelar la política como una unión discriminada y evitar combinaciones inválidas, como forzar una tool sin nombre.</p>`,
-    code:`from typing import Literal
-from pydantic import BaseModel
-
-class AutoChoice(BaseModel):
-    type: Literal["auto"] = "auto"
-
-class ForcedTool(BaseModel):
-    type: Literal["tool"] = "tool"
-    name: str
-
-ToolChoice = AutoChoice | ForcedTool
-
-choice = ForcedTool(name="read")
-payload = {
-    "model": "claude-sonnet-4-5",
-    "tools": tools,
-    "tool_choice": choice.model_dump(),
-}
-# {"type": "tool", "name": "read"}`,
-    foot:`<b>OpenAI:</b> <code>"auto"</code>, <code>"required"</code>, <code>"none"</code> o <code>{"type":"function","function":{"name":"read"}}</code>. Forzar una tool no valida el contenido: solo obliga a emitirla.`
-  },
-  {
+    key:'tool_call_id',
     label:'tool_call_id',
     kicker:'correlación · integridad referencial',
     file:'loop/results.py',
@@ -398,37 +449,7 @@ for result in results:
     foot:`El próximo request lleva todos los resultados, cada uno con su id. Es la única forma segura de reconstruir qué output corresponde a qué llamada.`
   },
   {
-    label:'arguments / parameters',
-    kicker:'schema vs payload',
-    file:'tools/edit.py',
-    explain:`<h3>Schema declarado vs datos emitidos</h3>
-      <p><code>parameters</code> (OpenAI) o <code>input_schema</code> (Anthropic) es el schema que declarás en el request. <code>arguments</code> (OpenAI) o <code>input</code> (Anthropic) son los datos de una llamada concreta.</p>
-      <ul><li><b>parameters</b>: JSON Schema; se genera con <code>Model.model_json_schema()</code>.</li><li><b>arguments</b>: string JSON en OpenAI; hay que parsearlo y validarlo.</li><li><b>input</b>: objeto en Anthropic; se valida directo.</li></ul>
-      <p>El schema no impide que el modelo invente valores: solo describe la forma esperada. La validación con Pydantic es la barrera antes del efecto.</p>`,
-    code:`from pydantic import BaseModel, Field
-
-class EditArgs(BaseModel):
-    path: str
-    old_string: str = Field(min_length=1)
-    new_string: str
-    replace_all: bool = False
-
-# 1) parameters / input_schema
-parameters = EditArgs.model_json_schema()
-
-# 2) arguments (OpenAI): string JSON
-raw_arguments = '{"path":"parser.py","old_string":"eval(...)","new_string":"..."}'
-args = EditArgs.model_validate_json(raw_arguments)
-
-# 3) input (Anthropic): objeto
-args2 = EditArgs.model_validate({
-    "path": "parser.py",
-    "old_string": "eval(...)",
-    "new_string": "...",
-})`,
-    foot:`En OpenAI, <code>arguments</code> puede venir incompleto si el stream se corta o si <code>finish_reason</code> es <code>length</code>. Parseá y validá antes de ejecutar.`
-  },
-  {
+    key:'parallel',
     label:'parallel tool calling',
     kicker:'varias tools · mismo turno',
     file:'loop/parallel.py',
@@ -464,6 +485,7 @@ async def run_parallel(calls: list[ToolCall]) -> list[ToolResult]:
     foot:`<b>OpenAI:</b> el request puede limitar el paralelismo con <code>parallel_tool_calls=false</code>. Si una tool necesita el output de otra, no van en paralelo: el modelo debe pedirlas en turnos separados. Paralelizar dependencias produce resultados viejos o inválidos.`
   },
   {
+    key:'structured',
     label:'structured outputs',
     kicker:'salida final · schema',
     file:'outputs/report.py',
@@ -515,16 +537,37 @@ function pydRender(){
   const ex=$('pydExplain'); if(ex) ex.innerHTML=t.explain;
   const code=$('pydCode'); if(code) code.textContent=t.code;
   const foot=$('pydFoot'); if(foot) foot.innerHTML=t.foot;
+  // hilo conductor: en qué paso del recorrido ① aparece este contrato
+  const link=$('pydLoopLink');
+  const wt=typeof wtStepForPyd==='function' ? wtStepForPyd(t.key) : null;
+  if(link){
+    link.innerHTML = wt
+      ? `<span>📍 <b>Dónde aparece en el loop:</b> paso ${wt.i+1} — ${wt.title}</span><button type="button" class="btn" data-wt-pyd="${t.key}">Ver en ① El loop →</button>`
+      : '';
+    const b=link.querySelector('[data-wt-pyd]');
+    if(b) b.onclick=()=>wtGotoPyd(b.dataset.wtPyd);
+  }
   document.querySelectorAll('.pydTab').forEach((b,i)=>{
     b.classList.toggle('on',i===pydTab);
     b.setAttribute('aria-selected',i===pydTab?'true':'false');
   });
   scheduleDecorate();
 }
+/* Abre la pestaña ② en un contrato concreto (por clave, ej. 'tool_result'). */
+function pydSelect(key, scroll){
+  const i=PYD_TABS.findIndex(t=>t.key===key);
+  if(i<0) return;
+  pydTab=i;
+  showMainTab('contracts');
+  const p=$('pydPanel');
+  if(p && p.classList.contains('collapsed')){ p.classList.remove('collapsed'); const tg=$('pydToggle'); if(tg) tg.textContent='ocultar'; }
+  pydRender();
+  if(scroll) requestAnimationFrame(()=>{ const el=$('pydTabs'); if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'}); });
+}
 function pydInit(){
   const tabs=$('pydTabs');
   if(tabs){
-    tabs.innerHTML=PYD_TABS.map((t,i)=>`<button type="button" class="pydTab" role="tab" data-pyd="${i}" aria-selected="${i===0}">${t.label}</button>`).join('');
+    tabs.innerHTML=PYD_TABS.map((t,i)=>`<button type="button" class="pydTab" role="tab" data-pyd="${i}" aria-selected="${i===0}"><span class="pydTabN">${i+1}</span>${t.label}</button>`).join('');
     tabs.querySelectorAll('.pydTab').forEach((b,i)=>{
       b.onclick=()=>{ pydTab=i; pydRender(); };
       b.onkeydown=e=>{
@@ -714,7 +757,8 @@ function decorateTerms(root){
       if(!node.nodeValue || !/[A-Za-z]/.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
       const p = node.parentElement;
       if(!p || !p.closest) return NodeFilter.FILTER_REJECT;
-      if(p.closest('pre, textarea, input, select, option, a, script, style, svg, .term, .glossary, .labDiff, .labCmdLog, #termTip')) {
+      // .btn y .relLink son inline-flex: un término envuelto se volvería un ítem flex aparte
+      if(p.closest('pre, textarea, input, select, option, a, script, style, svg, .term, .glossary, .labDiff, .labCmdLog, #termTip, .btn, .relLink')) {
         return NodeFilter.FILTER_REJECT;
       }
       return NodeFilter.FILTER_ACCEPT;
@@ -909,9 +953,47 @@ function loopInit(){
   };
   loopRenderStage(0, false);
 }
+
+/* =========================================================
+   HILO CONDUCTOR — tres pestañas principales
+   ① guide: el loop request por request · ② contracts: Pydantic · ③ sim: escenarios
+========================================================= */
+let mainTab = 'guide';
+function showMainTab(tab){
+  if(['guide','contracts','sim'].indexOf(tab)<0) tab = 'guide';
+  mainTab = tab;
+  document.querySelectorAll('[data-main-sec]').forEach(s=>s.classList.toggle('hidden', s.dataset.mainSec!==tab));
+  document.querySelectorAll('#mainTabs [data-main]').forEach(b=>{
+    const on = b.dataset.main===tab;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', on?'true':'false');
+  });
+  // la ventana de contexto y los descartes son de la simulación: fuera de ③ se ocultan
+  const lay = document.querySelector('.layout'); if(lay) lay.classList.toggle('noCtx', tab!=='sim');
+  if(tab!=='guide' && typeof wtStop==='function') wtStop();
+  if(tab!=='guide') loopStop();
+  try{ localStorage.setItem('harness-sim-tab', tab); }catch(e){}
+  scheduleDecorate();
+}
+function mainTabsInit(){
+  document.querySelectorAll('#mainTabs [data-main]').forEach(b=>{ b.onclick = ()=>showMainTab(b.dataset.main); });
+  let saved = 'guide';
+  try{ saved = localStorage.getItem('harness-sim-tab') || 'guide'; }catch(e){}
+  showMainTab(saved);
+}
+/* Links "para profundizar" de cada escenario: ① paso del loop · ② contrato · lab */
+function relLinksHTML(r){
+  const rel = r && r.rel; if(!rel) return '';
+  const links = [];
+  if(rel.wt) links.push(`<button type="button" class="relLink" data-goto-wt="${rel.wt[0]}"${rel.wtInvalid?' data-wt-invalid="1"':''}>① El loop: ${rel.wt[1]}</button>`);
+  if(rel.pyd){ const t = PYD_TABS.find(x=>x.key===rel.pyd); if(t) links.push(`<button type="button" class="relLink" data-goto-pyd="${rel.pyd}">② Contrato: ${t.label}</button>`); }
+  if(rel.lab){ const l = LAB_TABS.find(x=>x[0]===rel.lab); if(l) links.push(`<button type="button" class="relLink" data-goto-lab="${rel.lab}">🧩 Lab ${l[1]}</button>`); }
+  return links.length ? `<div class="relLinks"><span>Para profundizar:</span>${links.join('')}</div>` : '';
+}
 function startScenario(scn, opts){
   opts = opts || {};
   const sel=$('scn'); if(!sel) return;
+  showMainTab('sim');
   if(!opts.force && !opts.scenarioStart && steps.length && idx>1 && cfg.scenario!==scn && !confirm('Esto reinicia la simulación desde cero. ¿Continuar?')) return;
   sel.value = scn;
   reset();
@@ -1068,7 +1150,7 @@ logits[vocab] — score de cada token posible`],
   ['🎲 4 · Sampling (elegir el próximo token)',
    `temperature=0.7 → prob.softmax(logits)
 candidate: "read" (p=.82), "grep" (p=.11), …
-se elige 1 → se repetí del paso 3 del anterior? → sí: volver a forward
+se elige 1 token → se agrega a la secuencia → vuelve al paso 3 (otro forward pass)
 autoregresivo: token a token hasta <eos> o max_tokens`],
   ['🚧 4b · Structured outputs / JSON mode (máscara de logits)',
    `si la request trae response_format json_schema o tool_choice (tool forzada):
@@ -1110,7 +1192,7 @@ const OVERVIEW_MAP = {
 function overviewStep(){
   const o = OVERVIEW_MAP[cfg.scenario] || 'el circuito completo de un turno.';
   return S('VISIÓN GENERAL — el viaje completo de un turno','harness',
-  `Antes del detalle: <b>todo turno es el mismo circuito</b>. En este escenario vas a ver ${o} Cada tarjeta de la traza es una foto de ese circuito en un instante. Arriba tenés el diagrama interactivo de las 5 etapas (Perceive → Reason → Plan → Act → Observe) para ubicarte.`,
+  `Antes del detalle: <b>todo turno es el mismo circuito</b>. En este escenario vas a ver ${o} Cada tarjeta de la traza es una foto de ese circuito en un instante. Si querés ver el circuito con el array <code>messages</code> creciendo request por request, abrí <button type="button" class="relLink" data-goto-main="guide">① El loop, request por request</button>; ahí también está el diagrama de las 5 etapas (Perceive → Reason → Plan → Act → Observe).`,
   [{h:'el circuito completo (ida y vuelta)', c:
 `TÚ (TUI / editor / CLI)
   │  mensaje del usuario
@@ -1263,9 +1345,9 @@ const CONCEPTS = [
   {t:/^PARALLEL TOOL CALLING/, name:'Paralelo ahorra latencia, no tokens',
    why:'El modelo ya generó los N tool_use en un solo turno. El harness solapa la ejecución: wall = max(t_i) en vez de Σ(t_i).',
    err:'Paralelizar acciones dependientes. Si la segunda necesita el resultado de la primera, son turnos distintos.'},
-  {t:/Re-SORT por ID/, name:'El orden de los tool_result importa',
-   why:'Los resultados deben reenviarse en el mismo orden que los tool_use del turno anterior, cada uno con su id. El collect puede llegar en cualquier orden.',
-   err:'Mandar los resultados en orden de finalización. La API valida el orden y puede rechazar el request.'},
+  {t:/Re-SORT por ID/, name:'El id empareja; el orden ordena',
+   why:'La API exige un tool_result por cada tool_use, todos en el mensaje siguiente y emparejados por id. Reordenarlos como los tool_use no es lo que hace el matcheo, pero es la convención segura: historial legible, reproducible y compatible con clientes que asumen ese orden.',
+   err:'Perder o duplicar un id, o dejar un tool_use sin su resultado: eso sí hace que la API rechace el request.'},
   {t:/POST-LOOP/, name:'Trabajo invisible del harness',
    why:'Título de sesión, snapshot, persistencia y stats corren después del loop. Algunos son llamadas reales al modelo (hidden agents).',
    err:'Contar solo las llamadas "visibles" al presupuestar. El título y la compactación también se facturan.'},
@@ -1328,7 +1410,7 @@ const QUIZZES = [
   {t:/El HARNESS abre una sesión HIJA/, q:{question:'¿Qué ve el subagente del historial del padre?', options:['Todo el historial','Solo el prompt que le pasa el padre','El system del padre + todo'], answer:1, why:'El hijo arranca con contexto fresco: otro system y solo el prompt del padre. Ese aislamiento es el "context firewall".'}},
   {t:/El informe vuelve al PADRE/, q:{question:'¿Qué recibe el padre del trabajo del hijo?', options:['Todos los tool results','Solo el informe final','Nada'], answer:1, why:'El padre no ve el loop interno del hijo: recibe un único tool_result con el informe. Es lo que mantiene su ventana bajo control.'}},
   {t:/Ejecución CONCURRENTE del lote/, q:{question:'3 tools independientes en un turno: ¿cómo se ejecutan?', options:['Secuenciales','En paralelo y se reordenan por id','Solo la primera'], answer:1, why:'Si no hay dependencias, el harness las lanza concurrentes (Promise.all / gather). El tiempo de pared pasa de Σ a max.'}},
-  {t:/Re-SORT por ID/, q:{question:'Los resultados llegan en orden C, B, A. ¿Qué manda la API?', options:['En orden de llegada','En el orden de los tool_use','En cualquier orden'], answer:1, why:'Cada tool_result se matchea por tool_use_id, y el array debe respetar el orden de los tool_use del turno anterior. En desorden, el request se rechaza.'}},
+  {t:/Re-SORT por ID/, q:{question:'Los resultados llegan en orden C, B, A. ¿Cómo conviene mandarlos?', options:['En orden de llegada','En el orden de los tool_use, cada uno con su id','Sin ids: el orden alcanza'], answer:1, why:'Cada tool_result se matchea por tool_use_id: el id es obligatorio. Respetar el orden de los tool_use es la convención segura y hace el historial reproducible; lo que la API rechaza es un id faltante, duplicado o huérfano.'}},
   {t:/JSON mode: dos formas/, q:{question:'¿Qué garantiza JSON mode?', options:['Que el contenido sea verdadero','Que el formato sea JSON válido','Que el modelo no alucine'], answer:1, why:'Restringe el decoding a la gramática del schema: el JSON es válido. La veracidad del contenido es otro problema.'}},
   {t:/El HARNESS valida el input contra el schema/, q:{question:'El modelo manda argumentos que no cumplen el schema. ¿Qué hace el harness?', options:['Ejecuta igual','Rechaza y devuelve el error al modelo','Cambia el schema'], answer:1, why:'La validación es del harness. El error vuelve como tool_result y el modelo tiene la oportunidad de corregir los argumentos.'}},
   {t:/paso 0 — guardas del loop/, q:{question:'¿Qué pasa si se alcanza max_iterations?', options:['Sigue hasta terminar','Corta con stop_reason y devuelve el estado','Reinicia el loop'], answer:1, why:'Es la guarda contra loops infinitos: se corta aunque el modelo quiera seguir, y se devuelve el estado con un stop_reason de presupuesto.'}},
@@ -1392,7 +1474,7 @@ function buildSteps(){
   scenarioStartIdx = steps.length;
   if(routeMeta){
     steps.push(S('🎯 Escenario: '+routeMeta.t,'harness',
-      `<b>${routeMeta.b}</b> A partir de acá empieza el contenido específico de este escenario. Los pasos anteriores —visión general, sesión y armado del prompt— son el contexto común a todos los escenarios.`,
+      `<b>${routeMeta.b}</b> A partir de acá empieza el contenido específico de este escenario. Los pasos anteriores —visión general, sesión y armado del prompt— son el contexto común a todos los escenarios.${relLinksHTML(routeMeta)}`,
       [{h:'foco del escenario', c: routeMeta.b+'\n\n'+(OVERVIEW_MAP[scn]||'')}]));
   }
 
@@ -1547,7 +1629,7 @@ detección de bucle (mismo tool 3×):         ✓ no`}]));
    text:        "Voy a leer el archivo para entender el bug…"   ← ReAct THOUGHT
    tool_calls:  [ { id:"call_99", name:"read", args:{ path:"parser.py" } } ]   ← ReAct ACTION
    stop_reason: "tool_use"   ← todavía hay Action → NO sale del loop
-→ pasos 6-11 (segundos 3-4 del mapeo ReAct)`],18);
+→ pasos 6-11 (Act y Loop del mapeo de arriba)`],18);
 
     steps.push(S('ITERACIÓN 1 · paso 6 — APPEND del assistant message','harness',
       `El mensaje del modelo (texto + tool_call estructurado) entra al historial YA OCUPA ventana.`,
@@ -1635,9 +1717,8 @@ cfg.perm==='hitl'?
 `perm.check("edit", "parser.py")
   matchea regla: {action:"edit", effect:"allow"}
   → tool sigue sin frenos`}]));
-    steps.push(S('ITERACIÓN 2 · pasos 8-10 — exec /_DENIED + append del resultado',
-      cfg.perm==='deny'?'El resultado del tool fue el DENIED':'El diff tras aplicar entra como resultado',
-      'Resultados que entran al historial (y por tanto al ctx) según el desenlace.',
+    steps.push(S('ITERACIÓN 2 · pasos 8-10 — '+(cfg.perm==='deny'?'DENIED':'exec')+' + append del resultado','tool',
+      (cfg.perm==='deny'?'El resultado del tool fue el DENIED.':'El diff tras aplicar entra como resultado.')+' Resultados que entran al historial (y por tanto al ctx) según el desenlace.',
       [{h:'append', c:
 cfg.perm==='deny'?
 `messages.push({ role:"tool", tool_call_id:"call_100",
@@ -1685,7 +1766,7 @@ patch para aplicar manualmente: …"
 ② el modelo elige una y emite tool_use = {name, id, input:JSON args}  (NO ejecuta nada)
 ③ tu HARNESS valida ese input contra el schema (JSON Schema validation)
 ④ si falla: el error vuelve al modelo como tool_result(is_error) → self-healing
-⑤ si pasa: permisos → ejecución → tool_result al historial (está en el escenario 5)
+⑤ si pasa: permisos → ejecución → tool_result al historial (detalle en el escenario 3 · Los 12 micro-pasos)
 ⑥ para el output final: response_format json_schema (o tool anclada con tool_choice)
    → la respuesta sale validada por GRAMÁTICA: máquina-parseable, sin markdown`}]));
 
@@ -1742,11 +1823,11 @@ NO atrapa: old_string que no existe, path equivocado, intención peligrosa.
 `← tool_calls: [ { id:"call_02", name:"edit",
      args:{ path:"parser.py", old_string:"return eval(j['x'])",
             new_string:"return eval(j[str(k)]) if isinstance(j[k],dict) else j[k]" } } ]
-   (puso lo faltante: el ERROR estructurado del paso anterior fue suficiente
-    pregunta - no hace falta re-pedir ni reintentar a mano)`],15);
+   (agregó lo que faltaba: el ERROR estructurado del paso anterior alcanzó;
+    no hizo falta re-preguntar ni reintentar a mano)`],15);
 
     steps.push(S('Validación ✓ → permisos → ejecución → append','tool',
-      `Lo que hace el harness con un tool_use VÁLIDO (idéntico al escenario 5: permisos, exec, truncado, append). El resultado entra al historial normalmente.`,
+      `Lo que hace el harness con un tool_use VÁLIDO (idéntico al escenario 3 · Los 12 micro-pasos: permisos, exec, truncado, append). El resultado entra al historial normalmente.`,
       [{h:'estado', c:`schema ✓   → perm.check ✓ (config "${cfg.perm}")
             → edit aplicado (con ${cfg.perm==='ask'?'aprobación TUI':cfg.perm==='hitl'?'y/n terminal':'ejecución directa'})
             → messages.push(tool_result)`}],
@@ -1760,7 +1841,7 @@ NO atrapa: old_string que no existe, path equivocado, intención peligrosa.
    ← JSON válido POR GRAMÁTICA (máscara de logits, paso 4b del pipeline)
    ← tu harness lo recibe como record, no como texto a parsear`],35);
 
-    steps.push(S('JSON mode: dos formas (según prove)','ctx',
+    steps.push(S('JSON mode: dos formas (según el proveedor)','ctx',
       `Ambas logran lo mismo; eligen según qué soporta tu proveedor. El parsing del resultado es DETERMINISTICO sólo si hay decoding restringido: sin eso, un "parse_json" puede medio-fallar (comillas, markdown fences…).`,
       [{h:'Anthropic Messages', c:`response_format no existe (aún) → técnica: tool "fix_report" ANCLADA:
   tools: [ …, {name:"fix_report", input_schema: FIX_SCHEMA} ]
@@ -1972,7 +2053,7 @@ el corte tiene que ser visible para que un humano cambie el plan.`}]));
 
   if(scn==='parallel'){
     steps.push(S('PARALLEL TOOL CALLING — varias Actions en UN mismo turno','harness',
-      `Un mensaje asistente puede traer N tool_use a la vez (Anthropic: content[] con múltiples blocks; OpenAI: parallel_tool_calls). El harness puede ejecutarlas EN PARALELO si son independientes — y el ahorro es de LATENCIA del harness, no del modelo. Regla dura: los tool_result del turno deben reenviarse en el MISMO orden que sus tool_use (matcheo por ID).${cfg.think? ' Con extended thinking: el bloque thinking de ESTE turno viaja junto a ese conjunto de tool_results.' : ''}`,
+      `Un mensaje asistente puede traer N tool_use a la vez (Anthropic: content[] con múltiples blocks; OpenAI: parallel_tool_calls). El harness puede ejecutarlas EN PARALELO si son independientes — y el ahorro es de LATENCIA del harness, no del modelo. Regla dura: cada tool_use necesita su tool_result con el mismo ID, todos en el mensaje siguiente; reenviarlos en el MISMO orden que sus tool_use es la convención segura.${cfg.think? ' Con extended thinking: el bloque thinking de ESTE turno viaja junto a ese conjunto de tool_results.' : ''}`,
       [{h:'latencia de ejecución', c:
 `serial:   Σ(t_readA + t_readB + t_grepC)
 paralelo: max(t_i, t_j, t_k)   ← Promise.all /	asyncio.gather
@@ -2015,7 +2096,7 @@ t=31 ms  ✓ read parser    (el más pesado)
 sum(9,14,31)=54 ms serial    vs    max(9,14,31)=31 ms paralelo
 → ganaste 23 ms de HARNESS (el modelo sigue igual de caro y largo)`}]));
     steps.push(S('Re-SORT por ID: los resultados vuelven en el ORDEN de sus tool_use','ctx',
-      `Regla API (validación del proveedor): cada tool_result viaja con su tool_use_id, y el array del user-turn debe estar en el mismo orden que los tool_use del turno asistente previo. El collect llegó en orden de llegada (C,B,A) → se ordenan por id antes del append. Enviarlo en desorden: request RECHAZADA por la API.`,
+      `Regla API (validación del proveedor): cada tool_result viaja con su tool_use_id y todos van en el user-turn que sigue al assistant. El collect llegó en orden de llegada (C,B,A) → se ordenan como los tool_use antes del append: el matcheo es por id, pero mantener el orden deja el historial reproducible y evita sorpresas con clientes que lo asumen. Lo que sí rechaza la API: un id faltante, duplicado o huérfano.`,
       [{h:'reordenar', c:
 `collect: [C, B, A]
 → sort por tool_use_id esperado [A, B, C]
@@ -4128,19 +4209,20 @@ function renderLabBody(){
   bindLabs();
   scheduleDecorate();
 }
+const LAB_TABS = [
+  ['diff','① Diff approval'],
+  ['compact','② Compactación'],
+  ['registry','③ Tool registry'],
+  ['slash','④ Slash commands'],
+  ['memory','⑤ Memoria'],
+  ['agents','⑥ AGENTS.md'],
+  ['extensions','⑦ Puntos de extensión'],
+  ['challenges','⑧ Desafíos'],
+  ['toolresult','⑨ Tool result real'],
+  ['cancel','⑩ Streaming cancel']
+];
 function labsShell(){
-  const tabs = [
-    ['diff','① Diff approval'],
-    ['compact','② Compactación'],
-    ['registry','③ Tool registry'],
-    ['slash','④ Slash commands'],
-    ['memory','⑤ Memoria'],
-    ['agents','⑥ AGENTS.md'],
-    ['extensions','⑦ Puntos de extensión'],
-    ['challenges','⑧ Desafíos'],
-    ['toolresult','⑨ Tool result real'],
-    ['cancel','⑩ Streaming cancel']
-  ].map(([id,label])=>`<button class="labTab ${labTab===id?'on':''}" data-lab="${id}">${label}</button>`).join('');
+  const tabs = LAB_TABS.map(([id,label])=>`<button class="labTab ${labTab===id?'on':''}" data-lab="${id}">${label}</button>`).join('');
   return `<div class="labIntro">Laboratorios interactivos sobre decisiones del harness. Toman como punto de partida <a href="https://www.byoharness.dev/es/#curriculum" target="_blank" rel="noopener"><b>BYO Harness</b></a> y se complementan con documentación de proveedores, papers y repositorios de agentes. No modifican la corrida: cada pestaña muestra contrato, estado y resultado. Las referencias están en el README del repositorio.</div>
     <div class="labsTabs" id="labsTabs">${tabs}</div>
     <div id="labBody">${labsBody()}</div>`;
@@ -4823,11 +4905,13 @@ if(stepsRoot) stepsRoot.addEventListener('click', e=>{
   if(b) startScenario($('scn').value);
 });
 $('btnStep').onclick  = ()=>{
+  showMainTab('sim');
   if(!steps.length){ $('steps').innerHTML='<div class="empty">Primero presioná <b>Iniciar simulación</b>.</div>'; return; }
   next();
 };
 $('btnAuto').onclick  = ()=>{
   if(autoTimer){ stopAuto(); return; }
+  showMainTab('sim');
   if(!steps.length){ $('btnStep').onclick(); return; }
   $('btnAuto').textContent='⏸ Pausar';
   const speed=+($('autoSpeed') ? $('autoSpeed').value : 900) || 900;
@@ -4835,7 +4919,18 @@ $('btnAuto').onclick  = ()=>{
 };
 $('btnPrev').onclick = ()=> prevStep();
 $('btnNext2').onclick = ()=> next();
-$('btnSummary').onclick = ()=> showSummary({scroll:true});
+$('btnSummary').onclick = ()=>{ showMainTab('sim'); showSummary({scroll:true}); };
+/* links del hilo conductor: viven en tarjetas, pestañas y paneles */
+document.addEventListener('click', e=>{
+  const el = e.target && e.target.closest ? e.target.closest('[data-goto-main],[data-goto-wt],[data-goto-pyd],[data-goto-lab]') : null;
+  if(!el) return;
+  e.stopPropagation();
+  const d = el.dataset;
+  if(d.gotoMain) showMainTab(d.gotoMain);
+  else if(d.gotoPyd) pydSelect(d.gotoPyd, true);
+  else if(d.gotoLab) openLabs(d.gotoLab);
+  else if(d.gotoWt && typeof wtGotoTarget==='function') wtGotoTarget(d.gotoWt, d.wtInvalid==='1');
+});
 $('stepSelect').onchange = ()=> gotoStep(+$('stepSelect').value);
 if($('btnLabs')) $('btnLabs').onclick = ()=> openLabs();
 if($('btnSandbox')) $('btnSandbox').onclick = ()=> openSandbox();
@@ -4889,6 +4984,14 @@ if(document.addEventListener){
     }
     const tag=(e.target && e.target.tagName)||'';
     if(/^(INPUT|SELECT|TEXTAREA)$/.test(tag)) return;
+    if(mainTab==='guide' && typeof wtNext==='function'){
+      if(e.key==='ArrowRight' || e.key===' '){ e.preventDefault(); wtStop(); wtNext(); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); wtPrev(); }
+      else if(e.key==='Home'){ e.preventDefault(); wtStop(); wtGo(0); }
+      else if(e.key==='End'){ e.preventDefault(); wtStop(); wtGo(WT_STEPS.length-1); }
+      return;
+    }
+    if(mainTab!=='sim') return;
     if(e.key==='ArrowRight' || e.key===' '){ e.preventDefault(); next(); }
     else if(e.key==='ArrowLeft'){ e.preventDefault(); prevStep(); }
     else if(e.key==='Home'){ e.preventDefault(); gotoStep(0); }
@@ -4899,4 +5002,5 @@ if(document.addEventListener){
 loopInit();
 pydInit();
 reset();
+mainTabsInit();
 scheduleDecorate();

@@ -15,7 +15,7 @@
   <div class="headerRow">
     <div>
       <h1>⚙️ Simulador del Harness</h1>
-      <p>Cada paso desde que enviás tu mensaje hasta que recibís la respuesta — system prompt, agentic loop, context window y el recorrido real de los datos por el modelo. <b>13 escenarios</b> + <b>labs interactivos</b>, loop interactivo, concepto clave, payload real, quiz, sandbox y progreso.</p>
+      <p>Cada paso desde que enviás tu mensaje hasta que recibís la respuesta — system prompt, agentic loop, context window y el recorrido real de los datos por el modelo. Tres hilos conductores: <b>① el loop request por request</b>, <b>② los contratos con Pydantic</b> y <b>③ 13 escenarios simulados</b>, más <b>labs interactivos</b>, concepto clave, payload real, quiz, sandbox y progreso.</p>
       <p class="termLegend">Los términos técnicos en inglés tienen <span class="termSample">subrayado punteado</span>: pasá el mouse (o tocá) para ver su explicación.</p>
     </div>
     <div class="headerTools">
@@ -35,30 +35,32 @@
     <div class="panel">
       <h2>🧭 Ruta de aprendizaje</h2>
       <div class="body">
-        <div class="hint hintTight">Recorrido sugerido de lo simple a lo complejo. Cada parada abre el escenario y arranca la simulación desde cero. El ✓ marca lo que ya viste.</div>
+        <div class="hint hintTight">Recorrido sugerido de lo simple a lo complejo. Cada parada abre el escenario en <b>③ Escenarios</b> y arranca la simulación desde cero. El ✓ marca lo que ya viste. Si es tu primera vez, empezá por <button type="button" class="relLink" data-goto-main="guide">① El loop</button> y <button type="button" class="relLink" data-goto-main="contracts">② Contratos</button>.</div>
         <div class="routeList" id="routeList"></div>
       </div>
     </div>
     <div class="panel">
-      <h2>Configuración</h2>
+      <h2>Configuración <span class="h2note">de ③ Escenarios</span></h2>
       <div class="body">
-        <label>Escenario</label>
+        <div class="cfgGroup">Qué simular</div>
+        <label>Escenario <span class="textMuted">(mismo orden que la Ruta)</span></label>
         <select id="scn">
           <option value="simple">1 · Pregunta simple (sin herramientas)</option>
           <option value="edit" selected>2 · Edición de archivo (agentic loop + permisos)</option>
-          <option value="overflow">3 · Contexto lleno → compactación</option>
-          <option value="sub">4 · Subagente (sesión hija, fresh context)</option>
-          <option value="loop">5 · Anatomía del agentic loop (todos los pasos)</option>
-          <option value="tooluse">6 · Tool use: function calling + JSON mode</option>
-          <option value="parallel">7 · Parallel tool calling + extended thinking</option>
-          <option value="errores">8 · Errores y reintentos (429 · tool error · JSON inválido)</option>
-          <option value="guard">9 · El loop no converge → guard max_iterations</option>
-          <option value="mcp">10 · MCP: herramientas que viven fuera del harness</option>
-          <option value="injection">11 · Prompt injection: el tool result no es de confianza</option>
-          <option value="multiturn">12 · Segundo turno: qué se reenvía y qué se cachea</option>
-          <option value="streaming">13 · Streaming SSE: TTFT, deltas y usage parcial</option>
+          <option value="loop">3 · Anatomía del agentic loop (todos los pasos)</option>
+          <option value="tooluse">4 · Tool use: function calling + JSON mode</option>
+          <option value="parallel">5 · Parallel tool calling + extended thinking</option>
+          <option value="streaming">6 · Streaming SSE: TTFT, deltas y usage parcial</option>
+          <option value="errores">7 · Errores y reintentos (429 · tool error · JSON inválido)</option>
+          <option value="overflow">8 · Contexto lleno → compactación</option>
+          <option value="sub">9 · Subagente (sesión hija, fresh context)</option>
+          <option value="guard">10 · El loop no converge → guard max_iterations</option>
+          <option value="mcp">11 · MCP: herramientas que viven fuera del harness</option>
+          <option value="injection">12 · Prompt injection: el tool result no es de confianza</option>
+          <option value="multiturn">13 · Segundo turno: qué se reenvía y qué se cachea</option>
         </select>
 
+        <div class="cfgGroup">Reglas del harness</div>
         <label>Agente</label>
         <select id="agent">
           <option value="build">build (built-in, prompt base del harness)</option>
@@ -75,7 +77,7 @@
         </select>
         <div class="hint">Regla en <b>código</b>, independiente del prompt.</div>
 
-        <label>tool_choice (escenario 6)</label>
+        <label>tool_choice <span class="textMuted">(escenario 4 · Tool use)</span></label>
         <select id="toolchoice">
           <option value="auto" selected>auto — el modelo decide</option>
           <option value="any">any / required — al menos una tool</option>
@@ -83,13 +85,14 @@
           <option value="none">none — tools declaradas pero prohibidas</option>
         </select>
 
-        <label>max_iterations (guard del loop)</label>
+        <label>max_iterations — guard del loop <span class="textMuted">(escenarios 3 y 10)</span></label>
         <select id="maxiter">
           <option value="3">3 iteraciones</option>
           <option value="5">5 iteraciones</option>
           <option value="10" selected>10 iteraciones</option>
         </select>
 
+        <div class="cfgGroup">Modelo, ventana y caché</div>
         <label>Modelo (precio por millón de tokens)</label>
         <select id="price">
           <option value="glm">GLM 4.7 — $0,60 in / $2,20 out</option>
@@ -113,6 +116,7 @@
         <label><input type="checkbox" id="think" class="checkInline">Extended thinking (el "Thought" pagado: más tokens out, más latencia)</label>
         <div class="hint">En Anthropic: <code>thinking: {type:"enabled", budget_tokens:N}</code> y bloque thinking <b>antes</b> del texto. En OpenCode se controla con los <i>variants</i> (<code>#high</code>, etc.).</div>
 
+        <div class="cfgGroup">Cómo leer la traza</div>
         <label><input type="checkbox" id="predict" class="checkInline">Modo "predecí el paso" (pregunta antes de revelar)</label>
         <div class="hint">En los pasos clave te pregunta qué hace el harness y <b>recién después</b> muestra el payload. Lleva score.</div>
 
@@ -208,22 +212,142 @@
    </div>
   </div>
 
-  <!-- ================= TRAZA ================= -->
-  <div>
-    <div class="panel navpanel hidden" id="navPanel">
+  <!-- ================= CENTRO: tres hilos conductores ================= -->
+  <div class="centerCol">
+    <nav class="mainTabs" id="mainTabs" role="tablist" aria-label="Hilo conductor">
+      <button type="button" role="tab" data-main="guide" class="on" aria-selected="true"><span class="mtN">1</span><span class="mtT"><b>El loop, request por request</b><small>qué entra a messages, qué viaja y qué vuelve</small></span></button>
+      <button type="button" role="tab" data-main="contracts" aria-selected="false"><span class="mtN">2</span><span class="mtT"><b>Contratos con Pydantic</b><small>quién valida cada frontera del loop</small></span></button>
+      <button type="button" role="tab" data-main="sim" aria-selected="false"><span class="mtN">3</span><span class="mtT"><b>Escenarios simulados</b><small>13 casos: costos, caché, errores, seguridad</small></span></button>
+    </nav>
+
+    <!-- ================= ① EL LOOP, REQUEST POR REQUEST ================= -->
+    <section data-main-sec="guide">
+    <div class="panel wtPanel" id="wtPanel">
+      <h2><span class="h2t">🔁 El agentic loop, request por request</span>
+        <span class="loopBadge code">agent.py · Pydantic 2</span>
+        <span class="ioFmt" id="wtFmt" role="group" aria-label="Formato de API del recorrido">
+          <button type="button" data-fmt="anthropic" class="on">Anthropic</button>
+          <button type="button" data-fmt="openai">OpenAI</button>
+        </span>
+      </h2>
       <div class="body">
-        <button class="btn" id="btnPrev" title="Paso anterior (←)">←</button>
-        <select id="stepSelect" title="Ir a un paso"></select>
-        <button class="btn" id="btnNext2" title="Siguiente paso (→)">→</button>
-        <span class="navpos" id="navPos">0 / 0</span>
-        <span class="quizscore hidden" id="quizScore"></span>
+        <div class="wtIntro">Seguí <b>un solo mensaje</b> desde que lo escribís hasta que vuelve la respuesta. En cada paso ves qué se agrega a <code>messages</code>, qué viaja en el request, qué vuelve en el response, qué <b>contrato de Pydantic</b> valida esa frontera y qué línea de <code>agent.py</code> se está ejecutando. Tocá un nodo del diagrama para saltar a ese momento.</div>
+        <div class="wtCallout">⚠️ <b>Al diagrama clásico le falta un paso:</b> después de llamar al modelo hay que <b>agregar la respuesta del assistant</b> a <code>messages</code>, antes de ejecutar las tools. Si no, el <code>tool_result</code> queda huérfano y la API rechaza el request. <button type="button" class="btn" id="wtJumpAsst">Ver ese paso</button></div>
+        <div class="wtGrid">
+          <div class="wtFlowCol">
+            <div class="wtFlow" id="wtFlow"></div>
+            <label class="wtVariant"><input type="checkbox" id="wtInvalid"><span>Variante: el modelo manda argumentos inválidos y Pydantic los rechaza</span></label>
+          </div>
+          <div class="wtDetail">
+            <div class="wtTop"><span class="wtKicker" id="wtKicker"></span><button type="button" class="wtStage" id="wtStage" title="Ver esta etapa en el diagrama de 5 etapas"></button></div>
+            <div class="wtTitle" id="wtTitle"></div>
+            <div class="wtDesc" id="wtDesc"></div>
+            <div class="wtQA hidden" id="wtQA"></div>
+            <div class="wtControls">
+              <button class="btn" id="wtPrev">← Anterior</button>
+              <button class="btn primary" id="wtNext">Siguiente →</button>
+              <button class="btn" id="wtPlay">▶ Reproducir</button>
+              <button class="btn" id="wtReset" title="Volver al primer paso">↺</button>
+              <span class="wtKeys">teclado: ← →</span>
+            </div>
+            <div class="progress wtProgress"><div id="wtProgFill"></div></div>
+            <div class="wtPanes">
+              <div class="wtPane">
+                <div class="ioLabel"><b>messages[]</b><span id="wtMsgsCount"></span></div>
+                <div class="wtMsgs" id="wtMsgs"></div>
+              </div>
+              <div class="wtPane">
+                <div class="ioLabel"><b id="wtIOLabel">REQUEST</b><span id="wtIOSub"></span></div>
+                <pre class="wtIO" id="wtIO" aria-label="Request, response o trabajo del harness en este paso"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="wtBottom">
+          <div class="wtContract" id="wtContract"></div>
+          <div class="wtCodePane">
+            <div class="pydCodeHead"><span>la línea que se ejecuta en este paso</span><span id="wtCodeFile">agent.py</span></div>
+            <pre class="wtCode" id="wtCode" aria-label="Código del agentic loop"></pre>
+          </div>
+        </div>
+        <details class="wtMap">
+          <summary>🗺 Mismo loop, distintos nombres — el diagrama corregido y sus equivalencias</summary>
+          <div class="wtMapGrid">
+            <div>
+              <div class="plabel">diagrama clásico</div>
+<pre>[tu entrada]
+    │
+    ▼
+[agregar a messages]
+    │
+    ▼
+[llamar al modelo] ─────┐
+    │                   │
+    ▼                   │
+[¿hay tool_use?] ──no───┴──▶ [imprimir texto, volver al REPL]
+    │
+   sí
+    │
+    ▼
+[ejecutar cada herramienta]
+    │
+    ▼
+[agregar tool_results]
+    │
+    ▼
+(volver a "llamar al modelo")</pre>
+            </div>
+            <div>
+              <div class="plabel">diagrama corregido</div>
+<pre>[tu entrada]
+    │
+    ▼
+[agregar a messages]        role:"user"
+    │
+    ▼
+[llamar al modelo] ◀────────────────────┐  system + tools + TODO messages
+    │                                   │
+    ▼                                   │
+[agregar la respuesta]  ← faltaba       │  role:"assistant" (texto + tool_use)
+    │                                   │
+    ▼                                   │
+[¿hay tool_use?] ──no──▶ [imprimir texto, volver al REPL]
+    │                                   │
+   sí                                   │
+    ▼                                   │
+[validar (Pydantic) → permisos          │  ValidationError → tool_result is_error
+ → ejecutar cada herramienta]           │
+    │                                   │
+    ▼                                   │
+[agregar tool_results] ─────────────────┘  role:"user" con bloques tool_result
+                                           (OpenAI: un role:"tool" por llamada)</pre>
+            </div>
+          </div>
+          <div class="plabel">equivalencias entre las vistas del simulador</div>
+          <div class="wtMapTable">
+          <table class="labTable">
+            <thead><tr><th>nodo del diagrama</th><th>agent.py</th><th>5 etapas</th><th>ReAct</th><th>micro-pasos (escenario 3)</th><th>contrato</th></tr></thead>
+            <tbody>
+              <tr><td>tu entrada</td><td><code>input()</code></td><td>Perceive</td><td>—</td><td>antes del loop</td><td><code>UserMessage</code></td></tr>
+              <tr><td>agregar a messages</td><td><code>messages.append(user)</code></td><td>Perceive</td><td>—</td><td>antes del loop</td><td><code>model_dump()</code></td></tr>
+              <tr><td>llamar al modelo</td><td><code>client.messages.create</code></td><td>Reason (+ Plan)</td><td>Thought</td><td>0–5</td><td><code>model_json_schema()</code> · <code>Message</code></td></tr>
+              <tr><td>agregar la respuesta</td><td><code>messages.append(assistant)</code></td><td>Act</td><td>Action (registrada)</td><td>6</td><td><code>ToolUseBlock</code> · id</td></tr>
+              <tr><td>¿hay tool_use?</td><td><code>resp.stop_reason</code></td><td>Act</td><td>—</td><td>11 (decisión)</td><td><code>StopReason</code></td></tr>
+              <tr><td>validar y ejecutar</td><td><code>model_validate</code> → <code>RUNNERS</code></td><td>Act</td><td>Action</td><td>7–8</td><td><code>ReadArgs</code></td></tr>
+              <tr><td>agregar tool_results</td><td><code>messages.append(results)</code></td><td>Observe</td><td>Observation</td><td>9–10</td><td><code>ToolResult</code></td></tr>
+              <tr><td>imprimir, volver al REPL</td><td><code>print</code> · <code>break</code></td><td>— (fin del turno)</td><td>respuesta final</td><td>post-loop</td><td>structured outputs (opcional)</td></tr>
+            </tbody>
+          </table>
+          </div>
+          <div class="plabel">el mismo loop en pseudocódigo (como lo implementa un harness)</div>
+          <pre id="wtPseudo"></pre>
+        </details>
       </div>
-      <div class="progress"><div id="progressFill"></div></div>
     </div>
 
-    <!-- ================= LOOP INTERACTIVO ================= -->
+    <!-- ================= LOOP INTERACTIVO (vista conceptual) ================= -->
     <div class="panel loopPanel" id="loopPanel">
-      <h2>🔁 El agentic loop en 5 etapas
+      <h2><span class="h2t">🧭 Vista conceptual: el loop en 5 etapas</span>
         <span class="loopBadge code" id="loopIter">iteración 1</span>
         <button class="loopHeadBtn" id="loopToggle" title="Mostrar u ocultar el diagrama">ocultar</button>
       </h2>
@@ -281,7 +405,7 @@
             <button class="btn" id="loopReset" title="Volver al inicio">↺</button>
             <label class="loopSkip" title="Para tareas simples, Plan se colapsa y el ciclo es Reason → Act → Observe"><input type="checkbox" id="loopSkipPlan"> tarea simple</label>
           </div>
-          <div class="loopNote">En tareas simples, <b>Plan se saltea</b>: el ciclo es <b>Reason → Act → Observe</b>. Perceive solo ocurre al inicio del turno o cuando llega un input nuevo.</div>
+          <div class="loopNote">En tareas simples, <b>Plan se saltea</b>: el ciclo es <b>Reason → Act → Observe</b>. Perceive solo ocurre al inicio del turno o cuando llega un input nuevo. Cada paso del recorrido de arriba indica su etapa: tocá el chip <b>etapa</b> para verla acá.</div>
         </div>
 
         <div class="loopIO">
@@ -308,14 +432,17 @@
       </div>
     </div>
 
-    <!-- ================= TALLER PYDANTIC ================= -->
+    </section>
+
+    <!-- ================= ② CONTRATOS CON PYDANTIC ================= -->
+    <section data-main-sec="contracts" class="hidden">
     <div class="panel pydPanel" id="pydPanel">
-      <h2>🐍 Pydantic y contratos del loop
+      <h2><span class="h2t">🐍 Pydantic y contratos del loop</span>
         <span class="loopBadge code">Python 3.10+ · Pydantic 2</span>
         <button class="loopHeadBtn" id="pydToggle" title="Mostrar u ocultar el taller">ocultar</button>
       </h2>
       <div class="body pydBody">
-        <div class="pydIntro"><b>Pydantic no habla con el modelo: define el contrato.</b> El schema viaja como <code>parameters</code>/<code>input_schema</code>; lo que el modelo devuelve como <code>arguments</code>/<code>input</code> se valida antes de ejecutar. Si falla, vuelve como <code>tool_result</code> con <code>is_error</code>.</div>
+        <div class="pydIntro"><b>Pydantic no habla con el modelo: define el contrato.</b> El schema viaja como <code>parameters</code>/<code>input_schema</code>; lo que el modelo devuelve como <code>arguments</code>/<code>input</code> se valida antes de ejecutar. Si falla, vuelve como <code>tool_result</code> con <code>is_error</code>. Las pestañas siguen el <b>orden del loop</b> (declarar → política → propuesta → decisión → resultado → correlación) y cada una te lleva al paso de <button type="button" class="relLink" data-goto-main="guide">① El loop</button> donde se usa.</div>
         <div class="pydFlow">
           <span>modelo Pydantic</span><i>→</i><code>model_json_schema()</code><i>→</i><span>request</span><i>→</i><span>modelo</span><i>→</i><code>model_validate*()</code><i>→</i><span>tool</span>
         </div>
@@ -372,20 +499,36 @@
           </div>
         </div>
         <div class="pydFoot" id="pydFoot"></div>
+        <div class="pydLoopLink" id="pydLoopLink"></div>
       </div>
+    </div>
+    </section>
+
+    <!-- ================= ③ ESCENARIOS SIMULADOS (traza) ================= -->
+    <section data-main-sec="sim" class="hidden">
+    <div class="panel navpanel hidden" id="navPanel">
+      <div class="body">
+        <button class="btn" id="btnPrev" title="Paso anterior (←)">←</button>
+        <select id="stepSelect" title="Ir a un paso"></select>
+        <button class="btn" id="btnNext2" title="Siguiente paso (→)">→</button>
+        <span class="navpos" id="navPos">0 / 0</span>
+        <span class="quizscore hidden" id="quizScore"></span>
+      </div>
+      <div class="progress"><div id="progressFill"></div></div>
     </div>
 
     <div id="steps">
       <div class="empty">Elegí una parada de la <b>Ruta de aprendizaje</b> (un clic arranca) o un escenario.<br><br><button class="btn primary" data-start-scenario>▶ Empezar con el escenario seleccionado</button><br><br>Cada tarjeta muestra <i>qué hace el harness</i>, <i>qué ve el modelo</i> y el <i>concepto clave</i> detrás.</div>
     </div>
     <div id="summary" class="summary"></div>
+    </section>
   </div>
 
-  <!-- ================= CONTEXTO + DESCARTES ================= -->
-  <div>
+  <!-- ================= CONTEXTO + DESCARTES (solo en ③) ================= -->
+  <div class="ctxCol">
     <div class="rightCol">
       <div class="panel">
-        <h2>Ventana de contexto (lo que se envía al LLM)</h2>
+        <h2><span class="h2t">Ventana de contexto (lo que se envía al LLM)</span></h2>
         <div class="body">
           <div id="ctxblocks"><div class="empty">Sin mensajes todavía.</div></div>
           <div id="ctxbarWrap">
@@ -410,7 +553,7 @@
         </div>
       </div>
       <div class="panel">
-        <h2>🗑️ Descartado / truncado (NO viaja en el payload)</h2>
+        <h2><span class="h2t">🗑️ Descartado / truncado (NO viaja en el payload)</span></h2>
         <div class="body" id="discardList">
           <div class="empty">Nada descartado en esta simulación.</div>
         </div>
@@ -428,5 +571,6 @@
 <div id="toast"></div>
 <div id="termTip" role="tooltip" aria-hidden="true"></div>
 <script src="js/app.js"></script>
+<script src="js/loop-walkthrough.js"></script>
 </body>
 </html>

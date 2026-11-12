@@ -6,7 +6,8 @@ El proyecto está separado en archivos estáticos, sin build ni dependencias:
 |---|---|
 | [`index.html`](index.html) | estructura y contenido de la página |
 | [`css/styles.css`](css/styles.css) | estilos, layout y responsive |
-| [`js/app.js`](js/app.js) | lógica de escenarios, loop, labs, sandbox y exportación |
+| [`js/app.js`](js/app.js) | lógica de escenarios, loop de 5 etapas, Pydantic, labs, sandbox y exportación |
+| [`js/loop-walkthrough.js`](js/loop-walkthrough.js) | recorrido ① “El loop, request por request” (se carga después de `app.js`) |
 | [`favicon.svg`](favicon.svg) | ícono del sitio |
 
 Abrí `index.html` directamente en el navegador, o servilo localmente:
@@ -31,9 +32,70 @@ La idea central: **el modelo propone, el harness decide y ejecuta**. El modelo e
 
 El entorno que aparece en el system prompt de ejemplo usa placeholders (`<sistema>`, `<raíz-del-proyecto>`, `<rama>`) en vez de datos de la máquina de quien abre el simulador.
 
-## El loop interactivo (5 etapas)
+## Tres hilos conductores
 
-Arriba de la traza hay un diagrama animado con las cinco etapas:
+La columna central se organiza en tres pestañas que se leen en orden y están enlazadas entre sí:
+
+| Pestaña | Pregunta que responde | Qué contiene |
+|---|---|---|
+| **① El loop, request por request** | ¿Qué entra a `messages`, qué viaja y qué vuelve en cada paso? | Recorrido paso a paso + vista conceptual de las 5 etapas |
+| **② Contratos con Pydantic** | ¿Quién valida cada frontera del loop y cómo? | Contratos, schemas y 8 pestañas en el orden del loop |
+| **③ Escenarios simulados** | ¿Qué pasa con costos, caché, errores y seguridad en casos reales? | Ruta de 13 escenarios, traza, ventana de contexto y resumen |
+
+Los cruces son explícitos: cada paso de ① tiene un botón al contrato de ② que valida ese paso; cada pestaña de ② indica en qué paso de ① aparece; y la tarjeta de entrada de cada escenario de ③ trae links “Para profundizar” al paso de ①, al contrato de ② y al lab relacionado. La ventana de contexto (panel derecho) solo se muestra en ③, que es donde se llena. La pestaña elegida se recuerda en `localStorage`.
+
+## ① El loop, request por request
+
+Sigue **un solo mensaje** desde el `input()` hasta la respuesta, con un `agent.py` mínimo (Anthropic) o `agent_openai.py` (OpenAI). En cada paso se ven, a la vez:
+
+- el **diagrama del loop** con el nodo activo (clic en un nodo salta a ese momento);
+- el array **`messages[]`** después del paso, con el elemento recién agregado resaltado;
+- el **REQUEST** o la **RESPONSE** completos de ese momento (o el trabajo interno del harness si el paso no cruza la red);
+- el **contrato de Pydantic** que valida esa frontera, con link a la pestaña de ②;
+- la **línea de `agent.py`** que se está ejecutando;
+- la **etapa** (Perceive/Reason/Act/Observe): clic en el chip para verla en el diagrama de 5 etapas.
+
+El recorrido responde las preguntas típicas sobre el flujo:
+
+| Pregunta | Respuesta corta |
+|---|---|
+| ¿El mensaje del usuario se agrega a `messages`? | Sí: `messages.append({"role":"user","content":…})`. Es una lista del harness, no del modelo. En Anthropic el `system` y las `tools` no van en `messages`; en OpenAI el `system` sí. |
+| ¿Cómo se fija si hay `tool_use` / function calling? | Lee `stop_reason == "tool_use"` (Anthropic) o `finish_reason == "tool_calls"` (OpenAI). |
+| ¿La respuesta del modelo también va a `messages`? | Sí, y **antes** de ejecutar las tools. Es el paso que suele faltar en los diagramas: sin él, el `tool_result` queda huérfano y la API rechaza el request. |
+| ¿El resultado “se agrega a tool_result”? | Se **envuelve** en un bloque `tool_result` con el mismo `tool_use_id`, y ese bloque va en un mensaje nuevo `role:"user"` que se agrega a `messages` (OpenAI: un mensaje `role:"tool"` por llamada). |
+| ¿Qué pasa si los argumentos no cumplen el schema? | `ValidationError` → `tool_result` con `is_error: true` → el modelo corrige en la siguiente vuelta (variante “argumentos inválidos”). |
+
+El diagrama corregido:
+
+```text
+[tu entrada]
+    │
+    ▼
+[agregar a messages]        role:"user"
+    │
+    ▼
+[llamar al modelo] ◀────────────────────┐  system + tools + TODO messages
+    │                                   │
+    ▼                                   │
+[agregar la respuesta]  ← faltaba       │  role:"assistant" (texto + tool_use)
+    │                                   │
+    ▼                                   │
+[¿hay tool_use?] ──no──▶ [imprimir texto, volver al REPL]
+    │                                   │
+   sí                                   │
+    ▼                                   │
+[validar (Pydantic) → permisos          │  ValidationError → tool_result is_error
+ → ejecutar cada herramienta]           │
+    │                                   │
+    ▼                                   │
+[agregar tool_results] ─────────────────┘  role:"user" con bloques tool_result
+```
+
+El desplegable **“Mismo loop, distintos nombres”** muestra el diagrama original y el corregido lado a lado, una tabla de equivalencias entre las vistas del simulador (nodo del diagrama ↔ línea de código ↔ 5 etapas ↔ ReAct ↔ micro-pasos del escenario 3 ↔ contrato) y el mismo loop en pseudocódigo. Teclado: `←` `→`, Espacio, Home/End.
+
+## Vista conceptual: el loop en 5 etapas
+
+Dentro de ①, debajo del recorrido, hay un diagrama animado con las cinco etapas:
 
 | Etapa | Quién actúa | Qué pasa |
 |---|---|---|
@@ -64,9 +126,9 @@ Cubre, entre otros: `sampling`, `prefill`, `decode`, `TTFT`, `TTFB`, `SSE`, `for
 
 La decoración se aplica también al contenido dinámico (pasos, loop, Pydantic, sandbox y modales), pero no dentro de bloques `<pre>` ni de controles, para no romper el código ni la interacción. La primera aparición de cada término por bloque se subraya para no saturar la lectura.
 
-## 🐍 Pydantic y contratos del loop
+## ② Contratos con Pydantic
 
-Debajo del diagrama hay un taller interactivo con ocho pestañas y ejemplos en Python 3.10+ / Pydantic 2. Antes de las pestañas, un bloque **Contratos, schemas y validación** explica:
+La segunda pestaña es un taller interactivo con ocho pestañas y ejemplos en Python 3.10+ / Pydantic 2. Antes de las pestañas, un bloque **Contratos, schemas y validación** explica:
 
 - qué es un contrato y por qué tiene dos piezas (schema declarado + datos emitidos);
 - para qué sirve validar antes de ejecutar y cómo se devuelven errores accionables;
@@ -76,16 +138,18 @@ Debajo del diagrama hay un taller interactivo con ocho pestañas y ejemplos en P
 
 La secuencia didáctica es: **declarás → validás → ejecutás**. Un JSON perfecto puede seguir siendo una alucinación o una inyección.
 
-| Pestaña | Qué muestra |
-|---|---|
-| `tool_use` / function calling | cómo se declara una tool con `model_json_schema()` y cómo se valida la propuesta del modelo antes de ejecutarla |
-| `tool_result` | cómo se modela la Observation, el flag `is_error` y su forma en Anthropic y OpenAI |
-| `stop_reason` | la señal que decide si el loop continúa (`tool_use`) o termina (`end_turn`), incluyendo el peligro de `max_tokens` |
-| `tool_choice` | política de emisión de tools modelada con `Literal` y uniones discriminadas |
-| `tool_call_id` | correlación entre llamada y resultado; por qué nunca se empareja por orden |
-| `arguments` / `parameters` | diferencia entre el JSON Schema declarado y los datos que emite el modelo |
-| parallel tool calling | ejecución concurrente con `asyncio.gather`, preservando ids y resultados |
-| structured outputs | salida con `response_format`/`json_schema` o tool anclada, y validación final con Pydantic |
+Las pestañas siguen el **orden del loop** y cada una tiene un link “📍 Dónde aparece en el loop” al paso de ① donde se usa:
+
+| # | Pestaña | Momento del loop | Qué muestra |
+|---|---|---|---|
+| 1 | `arguments` / `parameters` | request: declarás | diferencia entre el JSON Schema declarado y los datos que emite el modelo |
+| 2 | `tool_choice` | request: política | política de emisión de tools modelada con `Literal` y uniones discriminadas |
+| 3 | `tool_use` / function calling | response: propuesta | cómo se declara una tool con `model_json_schema()` y cómo se valida la propuesta del modelo antes de ejecutarla |
+| 4 | `stop_reason` | decisión del loop | la señal que decide si el loop continúa (`tool_use`) o termina (`end_turn`), incluyendo el peligro de `max_tokens` |
+| 5 | `tool_result` | Observation | cómo se modela la Observation, el flag `is_error` y su forma en Anthropic y OpenAI |
+| 6 | `tool_call_id` | correlación | correlación entre llamada y resultado; por qué nunca se empareja por orden |
+| 7 | parallel tool calling | varias tools | ejecución concurrente con `asyncio.gather`, preservando ids y resultados |
+| 8 | structured outputs | salida final | salida con `response_format`/`json_schema` o tool anclada, y validación final con Pydantic |
 
 La idea central: **el schema describe, Pydantic valida, el harness decide**. Un `arguments` sintácticamente válido puede seguir siendo inválido para el modelo Pydantic; y un JSON válido puede ser falso. La validación no reemplaza los tests ni los permisos.
 
@@ -108,7 +172,9 @@ El botón **🧩 Labs** abre diez laboratorios independientes de la corrida. Sir
 
 Cada lab tiene contrato, estado visible, acción y resultado. No modifican la simulación principal; el progreso de los desafíos se guarda en `localStorage`.
 
-## Ruta de aprendizaje (13 paradas)
+## ③ Ruta de aprendizaje (13 paradas)
+
+El `<select>` de escenarios usa el mismo orden y numeración que la Ruta.
 
 | # | Escenario | Qué enseña |
 |---|---|---|
@@ -126,7 +192,7 @@ Cada lab tiene contrato, estado visible, acción y resultado. No modifican la si
 | 12 | Prompt injection | dato vs instrucción, permisos, sandbox, defensa en capas |
 | 13 | Segundo turno | reenvío stateless, caché, sesión y "memoria" |
 
-El panel **Ruta de aprendizaje** abre cada escenario con un clic y marca con ✓ los que ya recorriste (se guarda en `localStorage`). Al cambiar de parada, la simulación se reinicia y **abre directo la tarjeta de entrada del escenario** (`🎯 Escenario: …`), no la visión general compartida. Esa tarjeta separa explícitamente el contexto común (visión general, sesión y armado del prompt) del contenido propio, y debajo ya aparece el primer paso real del escenario. La página baja hasta la tarjeta de entrada y muestra un toast con el nombre de la ruta; no hay diálogo de confirmación que pueda dejar la navegación a medias.
+El panel **Ruta de aprendizaje** abre cada escenario con un clic (cambia a la pestaña ③) y marca con ✓ los que ya recorriste (se guarda en `localStorage`). Al cambiar de parada, la simulación se reinicia y **abre directo la tarjeta de entrada del escenario** (`🎯 Escenario: …`), no la visión general compartida. Esa tarjeta separa explícitamente el contexto común (visión general, sesión y armado del prompt) del contenido propio, trae links **“Para profundizar”** (paso de ①, contrato de ② y lab relacionado) y debajo ya aparece el primer paso real del escenario. La página baja hasta la tarjeta de entrada y muestra un toast con el nombre de la ruta; no hay diálogo de confirmación que pueda dejar la navegación a medias.
 
 El botón **▶ Iniciar simulación** y el botón del estado vacío usan el mismo arranque por escenario, sin confirmación nativa de por medio: si había una corrida anterior, se reinicia y se abre la entrada nueva. Si querés volver a la visión general, subí o elegí el paso 0 en el selector de pasos.
 
@@ -175,7 +241,7 @@ Disponible en cualquier momento, no solo al final:
 - **📦 Payload**: el JSON que cruza la red, con system, mensajes, tools, `tool_choice` y caché.
 - **⧉**: copia la tarjeta como texto.
 - **Panel derecho**: composición de la ventana, bloques descartados y estado de la caché.
-- **Navegación**: `←` `→`, Espacio, Home/End, selector de paso y barra de progreso.
+- **Navegación**: `←` `→`, Espacio, Home/End, selector de paso y barra de progreso. El teclado actúa sobre la pestaña activa (① o ③).
 - **Resumen final**: tabla de llamadas, tokens, caché, costo, latencia y exportación.
 
 ## Conceptos cubiertos
@@ -189,6 +255,7 @@ El **glosario** del panel izquierdo tiene 58 términos con buscador.
 - Los **tokens** son estimaciones (~4 caracteres/token) para que los números sean estables y comparables.
 - Los **precios, latencias y caché** son modelos simplificados, no una factura real.
 - La **forma del payload** sigue las APIs reales: Anthropic Messages (`system`, `content[]`, `tool_use`/`tool_result`, `input_schema`) y estilo Responses (`instructions`, `input`, `previous_response_id`, tools planas).
+- El recorrido ① usa la forma real de Anthropic Messages y OpenAI Chat Completions, y el JSON Schema es la salida real de `ReadArgs.model_json_schema()` en Pydantic 2. El `usage` es estimado y el código Python es didáctico: el simulador no lo ejecuta.
 - Las tools MCP se declaran con su nombre namespaced (`mcp__github__create_issue`) y su schema, como en un payload real.
 - El **streaming** muestra los eventos SSE con la forma de Anthropic (`message_start`, `content_block_delta`, `input_json_delta`, `message_delta`, `message_stop`); OpenAI usa `data: {"choices":[{"delta":…}]}` y `[DONE]`.
 - Los **nombres de modelo** y endpoints son ilustrativos.
