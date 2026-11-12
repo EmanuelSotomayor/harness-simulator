@@ -35,7 +35,7 @@ El dominio `harness-simulator.dev` se define en el archivo [`CNAME`](CNAME) y su
 
 `.dev` exige HTTPS en todos los navegadores: el sitio responde recién cuando GitHub emite el certificado. Después activá **Enforce HTTPS** en Settings → Pages.
 
-[`netlify.toml`](netlify.toml) queda del hosting anterior en Netlify; no afecta a Pages.
+El sitio anterior en Netlify (`harness-simulator.netlify.app`) quedó **desvinculado del repositorio**: los push a `main` ya no lo despliegan. Sigue en línea como copia congelada, sin dominio propio. El archivo `netlify.toml` ya no existe.
 
 ## Qué muestra
 

@@ -38,6 +38,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). El
 - El sitio se publica en GitHub Pages en lugar de Netlify; el README documenta el DNS y el deploy.
 - El recorrido presenta el paso del assistant como contenido, sin marcas de “faltaba” ni comparación con el diagrama original.
 
+### Eliminado
+
+- La integración de Netlify con el repositorio: el sitio quedó desvinculado y ya no se despliega con cada push a `main`.
+- El archivo `netlify.toml`, que ya no cumplía ninguna función con GitHub Pages.
+
 ### Corregido
 
 - Tarjeta “ITERACIÓN 2 · pasos 8-10” del escenario *Anatomía del loop*: recibía una frase como `badge`, sin color ni estilo válidos.
