@@ -1,5 +1,7 @@
 # Simulador del Harness
 
+**En vivo:** <https://harness-simulator.netlify.app>
+
 El proyecto está separado en archivos estáticos, sin build ni dependencias:
 
 | Archivo | Rol |
@@ -15,6 +17,16 @@ Abrí `index.html` directamente en el navegador, o servilo localmente:
 ```bash
 python3 -m http.server 8080   # http://localhost:8080/
 ```
+
+### Deploy
+
+El sitio está en Netlify, conectado a este repositorio: cada push a `main` publica la raíz del repo tal cual (ver [`netlify.toml`](netlify.toml), `publish = "."`, sin paso de build). Para publicar sin pasar por git, con la CLI de Netlify autenticada y el directorio vinculado al proyecto:
+
+```bash
+netlify deploy --prod --dir .
+```
+
+Un deploy manual queda pisado por el próximo push a `main`: subí también el commit para que el repo y el sitio no diverjan.
 
 ## Qué muestra
 
@@ -118,14 +130,6 @@ En **Act** el par ya no es una llamada al LLM: es `harness → tool` y `tool →
 
 > Para tareas simples, el ciclo real es **Reason → Act → Observe**. `Perceive` ocurre al inicio del turno o cuando llega un input nuevo; `Plan` se colapsa.
 
-## Notas emergentes para términos en inglés
-
-La explicación está en español, pero muchos conceptos técnicos se nombran en inglés. Las palabras y frases reconocidas aparecen con un **subrayado punteado**: al pasar el mouse se despliega una nota breve con su significado. También se puede tocar en pantalla táctil; un clic fuera la cierra.
-
-Cubre, entre otros: `sampling`, `prefill`, `decode`, `TTFT`, `TTFB`, `SSE`, `forward pass`, `embedding lookup`, `wire format`, `KV cache`, `prompt cache`, `tool_use`, `tool_result`, `function calling`, `stop_reason`, `tool_choice`, `tool_call_id`, `arguments`, `parameters`, `JSON Schema`, `structured outputs`, `MCP`, `JSON-RPC`, `HITL`, `TUI`, `stateful/stateless`, `sandbox`, `backoff`, `idempotencia`, `context firewall` y `agentic loop`.
-
-La decoración se aplica también al contenido dinámico (pasos, loop, Pydantic, sandbox y modales), pero no dentro de bloques `<pre>` ni de controles, para no romper el código ni la interacción. La primera aparición de cada término por bloque se subraya para no saturar la lectura.
-
 ## ② Contratos con Pydantic
 
 La segunda pestaña es un taller interactivo con ocho pestañas y ejemplos en Python 3.10+ / Pydantic 2. Antes de las pestañas, un bloque **Contratos, schemas y validación** explica:
@@ -153,9 +157,45 @@ Las pestañas siguen el **orden del loop** y cada una tiene un link “📍 Dón
 
 La idea central: **el schema describe, Pydantic valida, el harness decide**. Un `arguments` sintácticamente válido puede seguir siendo inválido para el modelo Pydantic; y un JSON válido puede ser falso. La validación no reemplaza los tests ni los permisos.
 
+## ③ Ruta de aprendizaje (13 paradas)
+
+El `<select>` de escenarios usa el mismo orden y numeración que la Ruta.
+
+| # | Escenario | Qué enseña |
+|---|---|---|
+| 1 | Pregunta simple | system, roles, tools, `max_tokens`, una sola llamada |
+| 2 | Edición de archivo | `tool_use` → permiso → ejecución → `tool_result` → respuesta |
+| 3 | Anatomía del loop | los 12 micro-pasos de una iteración, ReAct al detalle |
+| 4 | Tool use / function calling | schema, validación, `strict`, self-healing, JSON mode |
+| 5 | Parallel tool calling | dependencias, latencia, emparejamiento por `tool_use_id` |
+| 6 | Streaming SSE | `message_start`, deltas, `input_json_delta`, TTFB y usage parcial |
+| 7 | Errores y reintentos | 429, excepción del tool, JSON inválido: quién maneja qué |
+| 8 | Contexto lleno | ventana, truncado, compactación y caché invalidada |
+| 9 | Subagente | sesión hija, contexto fresco, context firewall |
+| 10 | Guard | `max_iterations`, señales de no convergencia, costo |
+| 11 | MCP | JSON-RPC, descubrimiento, namespacing y confianza |
+| 12 | Prompt injection | dato vs instrucción, permisos, sandbox, defensa en capas |
+| 13 | Segundo turno | reenvío stateless, caché, sesión y "memoria" |
+
+El panel **Ruta de aprendizaje** abre cada escenario con un clic (cambia a la pestaña ③) y marca con ✓ los que ya recorriste (se guarda en `localStorage`). Al cambiar de parada, la simulación se reinicia y **abre directo la tarjeta de entrada del escenario** (`🎯 Escenario: …`), no la visión general compartida. Esa tarjeta separa explícitamente el contexto común (visión general, sesión y armado del prompt) del contenido propio, trae links **“Para profundizar”** (paso de ①, contrato de ② y lab relacionado) y debajo ya aparece el primer paso real del escenario. La página baja hasta la tarjeta de entrada y muestra un toast con el nombre de la ruta; no hay diálogo de confirmación que pueda dejar la navegación a medias.
+
+El botón **▶ Iniciar simulación** y el botón del estado vacío usan el mismo arranque por escenario, sin confirmación nativa de por medio: si había una corrida anterior, se reinicia y se abre la entrada nueva. Si querés volver a la visión general, elegí la primera opción del selector de pasos (`VISIÓN GENERAL`) o apretá Home.
+
+## Cómo leer una tarjeta
+
+- **Badge**: quién actúa — `harness`, `model`, `tool`, `perm`, `ctx`, `user`, `mcp`, `sec`.
+- **💡 Concepto clave**: definición, por qué importa y error común.
+- **🤔 Quiz**: se activa con *predecí el paso*; pregunta antes de revelar el payload.
+- **📦 Payload**: el JSON que cruza la red, con system, mensajes, tools, `tool_choice` y caché.
+- **Para profundizar** (tarjeta `🎯 Escenario`): links al paso de ①, al contrato de ② y al lab relacionado.
+- **⧉**: copia la tarjeta como texto.
+- **Panel derecho**: composición de la ventana, bloques descartados y estado de la caché.
+- **Navegación**: `←` `→`, Espacio, Home/End, selector de paso y barra de progreso. El teclado actúa sobre la pestaña activa (① o ③).
+- **Resumen final**: tabla de llamadas, tokens, caché, costo, latencia y exportación.
+
 ## 🧩 Labs de harness
 
-El botón **🧩 Labs** abre diez laboratorios independientes de la corrida. Sirven para ver de cerca decisiones que un harness real toma todo el tiempo:
+El botón **🧩 Labs** del encabezado abre diez laboratorios independientes de la corrida (también se llega desde los links “Para profundizar” de cada escenario). Sirven para ver de cerca decisiones que un harness real toma todo el tiempo:
 
 | Lab | Qué muestra | Concepto que fija |
 |---|---|---|
@@ -172,31 +212,9 @@ El botón **🧩 Labs** abre diez laboratorios independientes de la corrida. Sir
 
 Cada lab tiene contrato, estado visible, acción y resultado. No modifican la simulación principal; el progreso de los desafíos se guarda en `localStorage`.
 
-## ③ Ruta de aprendizaje (13 paradas)
-
-El `<select>` de escenarios usa el mismo orden y numeración que la Ruta.
-
-| # | Escenario | Qué enseña |
-|---|---|---|
-| 1 | Pregunta simple | system, roles, tools, `max_tokens`, una sola llamada |
-| 2 | Edición de archivo | `tool_use` → permiso → ejecución → `tool_result` → respuesta |
-| 3 | Anatomía del loop | los 12 micro-pasos de una iteración, ReAct al detalle |
-| 4 | Tool use / function calling | schema, validación, `strict`, self-healing, JSON mode |
-| 5 | Parallel tool calling | dependencias, latencia, orden por `tool_use_id` |
-| 6 | Streaming SSE | `message_start`, deltas, `input_json_delta`, TTFB y usage parcial |
-| 7 | Errores y reintentos | 429, excepción del tool, JSON inválido: quién maneja qué |
-| 8 | Contexto lleno | ventana, truncado, compactación y caché invalidada |
-| 9 | Subagente | sesión hija, contexto fresco, context firewall |
-| 10 | Guard | `max_iterations`, señales de no convergencia, costo |
-| 11 | MCP | JSON-RPC, descubrimiento, namespacing y confianza |
-| 12 | Prompt injection | dato vs instrucción, permisos, sandbox, defensa en capas |
-| 13 | Segundo turno | reenvío stateless, caché, sesión y "memoria" |
-
-El panel **Ruta de aprendizaje** abre cada escenario con un clic (cambia a la pestaña ③) y marca con ✓ los que ya recorriste (se guarda en `localStorage`). Al cambiar de parada, la simulación se reinicia y **abre directo la tarjeta de entrada del escenario** (`🎯 Escenario: …`), no la visión general compartida. Esa tarjeta separa explícitamente el contexto común (visión general, sesión y armado del prompt) del contenido propio, trae links **“Para profundizar”** (paso de ①, contrato de ② y lab relacionado) y debajo ya aparece el primer paso real del escenario. La página baja hasta la tarjeta de entrada y muestra un toast con el nombre de la ruta; no hay diálogo de confirmación que pueda dejar la navegación a medias.
-
-El botón **▶ Iniciar simulación** y el botón del estado vacío usan el mismo arranque por escenario, sin confirmación nativa de por medio: si había una corrida anterior, se reinicia y se abre la entrada nueva. Si querés volver a la visión general, subí o elegí el paso 0 en el selector de pasos.
-
 ## Herramientas de laboratorio
+
+Los botones del encabezado están disponibles desde cualquier pestaña. Sandbox, Comparar y Exportar trabajan sobre la corrida de ③.
 
 ### 🧪 Sandbox de payload
 
@@ -233,16 +251,13 @@ Disponible en cualquier momento, no solo al final:
 - **CSV**: una fila por llamada, para planilla;
 - **cURL**: el request de la última llamada.
 
-## Cómo leer una tarjeta
+## Notas emergentes para términos en inglés
 
-- **Badge**: quién actúa — `harness`, `model`, `tool`, `perm`, `ctx`, `user`, `mcp`, `sec`.
-- **💡 Concepto clave**: definición, por qué importa y error común.
-- **🤔 Quiz**: se activa con *predecí el paso*; pregunta antes de revelar el payload.
-- **📦 Payload**: el JSON que cruza la red, con system, mensajes, tools, `tool_choice` y caché.
-- **⧉**: copia la tarjeta como texto.
-- **Panel derecho**: composición de la ventana, bloques descartados y estado de la caché.
-- **Navegación**: `←` `→`, Espacio, Home/End, selector de paso y barra de progreso. El teclado actúa sobre la pestaña activa (① o ③).
-- **Resumen final**: tabla de llamadas, tokens, caché, costo, latencia y exportación.
+La explicación está en español, pero muchos conceptos técnicos se nombran en inglés. Las palabras y frases reconocidas aparecen con un **subrayado punteado**: al pasar el mouse se despliega una nota breve con su significado. También se puede tocar en pantalla táctil; un clic fuera la cierra.
+
+Cubre, entre otros: `sampling`, `prefill`, `decode`, `TTFT`, `TTFB`, `SSE`, `forward pass`, `embedding lookup`, `wire format`, `KV cache`, `prompt cache`, `tool_use`, `tool_result`, `function calling`, `stop_reason`, `tool_choice`, `tool_call_id`, `arguments`, `parameters`, `JSON Schema`, `structured outputs`, `MCP`, `JSON-RPC`, `HITL`, `TUI`, `stateful/stateless`, `sandbox`, `backoff`, `idempotencia`, `context firewall` y `agentic loop`.
+
+La decoración se aplica también al contenido dinámico (pasos, loop, Pydantic, sandbox y modales), pero no dentro de bloques `<pre>` ni de controles (inputs, selects, botones y links), para no romper el código ni la interacción. La primera aparición de cada término por bloque se subraya para no saturar la lectura.
 
 ## Conceptos cubiertos
 
